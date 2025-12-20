@@ -6,6 +6,7 @@ const workoutPlans = {
     name: "Arm Day",
     emoji: "💪",
     description: "Biceps & Triceps Focus",
+    color: "orange",
     exercises: [
       { id: 1, name: "Bicep Curls", sets: 4, reps: "10-12", weight: 25, completed: Array(4).fill(false) },
       { id: 2, name: "Hammer Curls", sets: 3, reps: "12", weight: 20, completed: Array(3).fill(false) },
@@ -18,6 +19,7 @@ const workoutPlans = {
     name: "Full Body",
     emoji: "🏋️",
     description: "Bodyweight Only • 3x/Week",
+    color: "emerald",
     exercises: [
       { id: 101, name: "Push-Ups", sets: 3, reps: "8-15", weight: 0, completed: Array(3).fill(false), notes: "Chest, shoulders, triceps. Gold standard for upper body pushing." },
       { id: 102, name: "Pull-Ups / Inverted Rows", sets: 3, reps: "5-12", weight: 0, completed: Array(3).fill(false), notes: "Back, biceps. Best bodyweight pull movement." },
@@ -43,8 +45,8 @@ export default function Home() {
   const [showCongrats, setShowCongrats] = useState(false);
 
   const exercises = workouts[activeTab].exercises;
+  const currentWorkout = workouts[activeTab];
 
-  // Workout timer
   useEffect(() => {
     let interval;
     if (workoutStarted && !showCongrats) {
@@ -53,7 +55,6 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [workoutStarted, showCongrats]);
 
-  // Rest timer
   useEffect(() => {
     let interval;
     if (isResting && restTimer > 0) {
@@ -67,7 +68,6 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [isResting, restTimer]);
 
-  // Check if workout complete
   useEffect(() => {
     const allComplete = exercises.every((ex) => ex.completed.every((set) => set));
     if (allComplete && exercises.length > 0 && workoutStarted) {
@@ -177,120 +177,176 @@ export default function Home() {
   const progress = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen bg-black text-white overflow-x-hidden">
+      {/* Background Gradient */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-full h-96 opacity-30 blur-3xl ${
+          activeTab === "arms" 
+            ? "bg-gradient-to-b from-orange-600 to-transparent" 
+            : "bg-gradient-to-b from-emerald-600 to-transparent"
+        }`} />
+      </div>
+
       {/* Congrats Modal */}
       {showCongrats && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl p-8 max-w-md w-full text-center">
-            <div className="text-6xl mb-4">🎉</div>
-            <h2 className="text-3xl font-bold mb-2">Workout Complete!</h2>
-            <p className="text-zinc-400 mb-6">
-              You crushed {workouts[activeTab].name} in {formatTime(workoutTime)}
-            </p>
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-zinc-800 rounded-xl p-4">
-                <p className="text-2xl font-bold text-green-400">{totalSets}</p>
-                <p className="text-zinc-500 text-sm">Sets Completed</p>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="relative bg-gradient-to-b from-zinc-900 to-zinc-950 border border-zinc-800 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl">
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+            <div className="relative">
+              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center shadow-lg shadow-green-500/25">
+                <span className="text-4xl">🏆</span>
               </div>
-              <div className="bg-zinc-800 rounded-xl p-4">
-                <p className="text-2xl font-bold text-blue-400">{exercises.length}</p>
-                <p className="text-zinc-500 text-sm">Exercises Done</p>
+              <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
+                Workout Complete!
+              </h2>
+              <p className="text-zinc-400 mb-8">
+                You crushed {currentWorkout.name} in {formatTime(workoutTime)}
+              </p>
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                <div className="bg-zinc-800/50 backdrop-blur rounded-2xl p-4 border border-zinc-700/50">
+                  <p className="text-3xl font-bold text-green-400">{totalSets}</p>
+                  <p className="text-zinc-500 text-sm">Sets Completed</p>
+                </div>
+                <div className="bg-zinc-800/50 backdrop-blur rounded-2xl p-4 border border-zinc-700/50">
+                  <p className="text-3xl font-bold text-blue-400">{exercises.length}</p>
+                  <p className="text-zinc-500 text-sm">Exercises Done</p>
+                </div>
               </div>
+              <button
+                onClick={resetWorkout}
+                className="w-full bg-gradient-to-r from-white to-zinc-200 text-black font-semibold py-4 rounded-2xl hover:opacity-90 transition-all shadow-lg shadow-white/10"
+              >
+                Start New Workout
+              </button>
             </div>
-            <button
-              onClick={resetWorkout}
-              className="w-full bg-white text-black font-semibold py-3 rounded-xl hover:bg-zinc-200 transition-colors"
-            >
-              Start New Workout
-            </button>
           </div>
         </div>
       )}
 
       {/* Rest Timer Overlay */}
       {isResting && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-40">
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center z-40">
           <div className="text-center">
-            <p className="text-zinc-400 mb-2 text-lg">Rest Time</p>
-            <p className="text-8xl font-bold font-mono">{formatTime(restTimer)}</p>
+            <div className="relative">
+              <div className="absolute inset-0 animate-ping opacity-20">
+                <div className="w-48 h-48 mx-auto rounded-full border-4 border-white" />
+              </div>
+              <div className="relative w-48 h-48 mx-auto rounded-full border-4 border-zinc-700 flex items-center justify-center mb-6">
+                <div>
+                  <p className="text-6xl font-bold font-mono">{restTimer}</p>
+                  <p className="text-zinc-500 text-sm uppercase tracking-widest">seconds</p>
+                </div>
+              </div>
+            </div>
+            <p className="text-zinc-400 mb-8 text-lg">Rest & Recover</p>
             <button
               onClick={() => setIsResting(false)}
-              className="mt-8 px-8 py-3 bg-zinc-800 rounded-xl hover:bg-zinc-700 transition-colors"
+              className="px-8 py-3 bg-zinc-900 border border-zinc-700 rounded-xl hover:bg-zinc-800 transition-all text-zinc-300"
             >
-              Skip Rest
+              Skip Rest →
             </button>
           </div>
         </div>
       )}
 
       {/* Header */}
-      <header className="sticky top-0 bg-zinc-950/80 backdrop-blur-lg border-b border-zinc-800 px-4 py-4 z-30">
-        <div className="max-w-2xl mx-auto">
-          <div className="flex justify-between items-center mb-4">
+      <header className="sticky top-0 z-30">
+        <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" />
+        <div className="relative max-w-2xl mx-auto px-4 py-4">
+          {/* Brand & Timer */}
+          <div className="flex justify-between items-start mb-6">
             <div>
-              <h1 className="text-xl font-bold tracking-tight">
-                {workouts[activeTab].emoji} {workouts[activeTab].name}
+              <p className="text-xs font-medium text-zinc-500 uppercase tracking-widest mb-1">Workout Tracker</p>
+              <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3">
+                <span className="w-10 h-10 bg-gradient-to-br from-zinc-800 to-zinc-900 rounded-xl flex items-center justify-center border border-zinc-700/50 shadow-lg">
+                  {currentWorkout.emoji}
+                </span>
+                <span className="bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
+                  {currentWorkout.name}
+                </span>
               </h1>
-              <p className="text-sm text-zinc-500">by Null</p>
             </div>
             <div className="text-right">
               {workoutStarted ? (
-                <div>
-                  <p className="text-2xl font-mono font-bold">{formatTime(workoutTime)}</p>
-                  <p className="text-xs text-zinc-500">Workout Time</p>
+                <div className="bg-zinc-900/80 backdrop-blur border border-zinc-800 rounded-2xl px-4 py-2">
+                  <p className="text-2xl font-mono font-bold tracking-tight">{formatTime(workoutTime)}</p>
+                  <p className="text-xs text-zinc-500 uppercase tracking-wider">Duration</p>
                 </div>
               ) : (
-                <span className="text-sm text-zinc-500">Ready to start</span>
+                <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl px-4 py-2">
+                  <p className="text-sm text-zinc-500">Ready</p>
+                </div>
               )}
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-2 mb-4">
+          <div className="flex gap-2 p-1 bg-zinc-900/80 rounded-2xl border border-zinc-800/50 mb-5">
             {Object.entries(workouts).map(([key, workout]) => (
               <button
                 key={key}
                 onClick={() => switchTab(key)}
-                className={`flex-1 py-2 px-4 rounded-lg font-medium transition-all ${
+                className={`flex-1 py-3 px-4 rounded-xl font-medium transition-all duration-300 ${
                   activeTab === key
-                    ? "bg-white text-black"
-                    : "bg-zinc-900 text-zinc-400 hover:bg-zinc-800"
+                    ? `bg-gradient-to-r ${key === "arms" ? "from-orange-500 to-amber-500" : "from-emerald-500 to-green-500"} text-white shadow-lg`
+                    : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
                 }`}
               >
-                {workout.emoji} {workout.name}
+                <span className="mr-2">{workout.emoji}</span>
+                {workout.name}
               </button>
             ))}
           </div>
 
-          {/* Workout Description */}
-          <p className="text-sm text-zinc-400 mb-3">{workouts[activeTab].description}</p>
-
-          {/* Progress Bar */}
-          <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-green-500 to-emerald-400 transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
+          {/* Progress Section */}
+          <div className="bg-zinc-900/50 backdrop-blur border border-zinc-800/50 rounded-2xl p-4">
+            <div className="flex justify-between items-center mb-3">
+              <span className="text-sm text-zinc-400">{currentWorkout.description}</span>
+              <span className="text-sm font-mono font-medium">{Math.round(progress)}%</span>
+            </div>
+            <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
+              <div
+                className={`h-full transition-all duration-500 ease-out ${
+                  activeTab === "arms"
+                    ? "bg-gradient-to-r from-orange-500 to-amber-400"
+                    : "bg-gradient-to-r from-emerald-500 to-green-400"
+                }`}
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="flex justify-between items-center mt-2">
+              <span className="text-xs text-zinc-600">{completedSets} of {totalSets} sets</span>
+              <span className="text-xs text-zinc-600">{exercises.length} exercises</span>
+            </div>
           </div>
-          <p className="text-xs text-zinc-500 mt-1">
-            {completedSets} of {totalSets} sets completed
-          </p>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-2xl mx-auto px-4 py-6">
+      <main className="relative max-w-2xl mx-auto px-4 py-6">
         {/* Quick Rest Buttons */}
-        <section className="mb-6">
-          <p className="text-sm text-zinc-500 mb-2">Quick Rest Timer</p>
-          <div className="flex gap-2">
-            {[30, 60, 90, 120].map((seconds) => (
+        <section className="mb-8">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-800">
+              <span className="text-sm">⏱️</span>
+            </div>
+            <p className="text-sm font-medium text-zinc-300">Rest Timer</p>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {[
+              { seconds: 30, label: "30s" },
+              { seconds: 60, label: "1m" },
+              { seconds: 90, label: "1:30" },
+              { seconds: 120, label: "2m" },
+            ].map(({ seconds, label }) => (
               <button
                 key={seconds}
                 onClick={() => startRest(seconds)}
-                className="flex-1 bg-zinc-900 border border-zinc-800 py-2 rounded-lg hover:bg-zinc-800 hover:border-zinc-700 transition-colors text-sm"
+                className="group relative bg-zinc-900/80 border border-zinc-800 py-4 rounded-2xl hover:border-zinc-700 hover:bg-zinc-800/80 transition-all duration-300"
               >
-                {seconds}s
+                <span className="block text-lg font-semibold text-white group-hover:scale-110 transition-transform">
+                  {label}
+                </span>
               </button>
             ))}
           </div>
@@ -298,84 +354,105 @@ export default function Home() {
 
         {/* Science Note for Full Body */}
         {activeTab === "fullbody" && (
-          <section className="mb-6 bg-blue-950/30 border border-blue-900/50 rounded-xl p-4">
-            <p className="text-sm text-blue-300">
-              <span className="font-semibold">Science-Backed Routine:</span> These compound movements 
-              target all major muscle groups. Research shows 3x/week full-body training is optimal 
-              for strength and hypertrophy in natural lifters. Rest 48 hours between sessions.
-            </p>
+          <section className="mb-8">
+            <div className="relative overflow-hidden bg-gradient-to-br from-emerald-950/50 to-zinc-900/50 border border-emerald-800/30 rounded-2xl p-5">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl" />
+              <div className="relative flex gap-4">
+                <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center shrink-0">
+                  <span className="text-lg">🧬</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-emerald-400 mb-1">Science-Backed Routine</p>
+                  <p className="text-sm text-zinc-400 leading-relaxed">
+                    Compound movements targeting all major muscle groups. Research shows 3x/week full-body training is optimal for strength and hypertrophy. Rest 48 hours between sessions.
+                  </p>
+                </div>
+              </div>
+            </div>
           </section>
         )}
 
         {/* Exercise List */}
-        <section className="space-y-4">
-          {exercises.map((exercise) => (
+        <section className="space-y-3">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-800">
+              <span className="text-sm">📋</span>
+            </div>
+            <p className="text-sm font-medium text-zinc-300">Exercises</p>
+          </div>
+          
+          {exercises.map((exercise, index) => (
             <ExerciseCard
               key={exercise.id}
               exercise={exercise}
+              index={index}
               onToggleSet={toggleSet}
               onDelete={deleteExercise}
               onUpdateWeight={updateWeight}
               showWeight={activeTab === "arms"}
+              accentColor={activeTab === "arms" ? "orange" : "emerald"}
             />
           ))}
         </section>
 
         {/* Add Exercise */}
         {showAddExercise ? (
-          <div className="mt-4 bg-zinc-900 border border-zinc-700 rounded-xl p-4">
-            <h3 className="font-semibold mb-4">Add New Exercise</h3>
-            <div className="space-y-3">
+          <div className="mt-4 bg-gradient-to-b from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-5 shadow-xl">
+            <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <span className="w-6 h-6 bg-zinc-800 rounded-lg flex items-center justify-center text-xs">+</span>
+              Add New Exercise
+            </h3>
+            <div className="space-y-4">
               <input
                 type="text"
                 placeholder="Exercise name"
                 value={newExercise.name}
                 onChange={(e) => setNewExercise({ ...newExercise, name: e.target.value })}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 focus:outline-none focus:border-zinc-500"
+                className="w-full bg-zinc-800/50 border border-zinc-700 rounded-xl px-4 py-3 focus:outline-none focus:border-zinc-500 focus:ring-2 focus:ring-zinc-500/20 transition-all placeholder-zinc-500"
               />
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="text-xs text-zinc-500 block mb-1">Sets</label>
+                  <label className="text-xs text-zinc-500 block mb-2 uppercase tracking-wider">Sets</label>
                   <input
                     type="number"
                     value={newExercise.sets}
-                    onChange={(e) =>
-                      setNewExercise({ ...newExercise, sets: parseInt(e.target.value) || 1 })
-                    }
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 focus:outline-none focus:border-zinc-500"
+                    onChange={(e) => setNewExercise({ ...newExercise, sets: parseInt(e.target.value) || 1 })}
+                    className="w-full bg-zinc-800/50 border border-zinc-700 rounded-xl px-3 py-3 text-center focus:outline-none focus:border-zinc-500 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-zinc-500 block mb-1">Reps</label>
+                  <label className="text-xs text-zinc-500 block mb-2 uppercase tracking-wider">Reps</label>
                   <input
                     type="text"
                     value={newExercise.reps}
                     onChange={(e) => setNewExercise({ ...newExercise, reps: e.target.value })}
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 focus:outline-none focus:border-zinc-500"
+                    className="w-full bg-zinc-800/50 border border-zinc-700 rounded-xl px-3 py-3 text-center focus:outline-none focus:border-zinc-500 transition-all"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-zinc-500 block mb-1">Weight (lbs)</label>
+                  <label className="text-xs text-zinc-500 block mb-2 uppercase tracking-wider">Weight</label>
                   <input
                     type="number"
                     value={newExercise.weight}
-                    onChange={(e) =>
-                      setNewExercise({ ...newExercise, weight: parseInt(e.target.value) || 0 })
-                    }
-                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 focus:outline-none focus:border-zinc-500"
+                    onChange={(e) => setNewExercise({ ...newExercise, weight: parseInt(e.target.value) || 0 })}
+                    className="w-full bg-zinc-800/50 border border-zinc-700 rounded-xl px-3 py-3 text-center focus:outline-none focus:border-zinc-500 transition-all"
                   />
                 </div>
               </div>
-              <div className="flex gap-2 mt-4">
+              <div className="flex gap-3 mt-6">
                 <button
                   onClick={() => setShowAddExercise(false)}
-                  className="flex-1 py-2 rounded-lg border border-zinc-700 hover:bg-zinc-800 transition-colors"
+                  className="flex-1 py-3 rounded-xl border border-zinc-700 hover:bg-zinc-800 transition-all text-zinc-400"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={addExercise}
-                  className="flex-1 py-2 rounded-lg bg-white text-black font-semibold hover:bg-zinc-200 transition-colors"
+                  className={`flex-1 py-3 rounded-xl font-semibold transition-all shadow-lg ${
+                    activeTab === "arms"
+                      ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:opacity-90 shadow-orange-500/20"
+                      : "bg-gradient-to-r from-emerald-500 to-green-500 hover:opacity-90 shadow-emerald-500/20"
+                  }`}
                 >
                   Add Exercise
                 </button>
@@ -385,9 +462,10 @@ export default function Home() {
         ) : (
           <button
             onClick={() => setShowAddExercise(true)}
-            className="w-full mt-4 py-4 border-2 border-dashed border-zinc-800 rounded-xl text-zinc-500 hover:border-zinc-600 hover:text-zinc-300 transition-colors"
+            className="w-full mt-4 py-5 border-2 border-dashed border-zinc-800 rounded-2xl text-zinc-500 hover:border-zinc-600 hover:text-zinc-300 hover:bg-zinc-900/30 transition-all duration-300 flex items-center justify-center gap-2"
           >
-            + Add Exercise
+            <span className="w-6 h-6 border border-current rounded-lg flex items-center justify-center text-sm">+</span>
+            Add Exercise
           </button>
         )}
 
@@ -395,7 +473,7 @@ export default function Home() {
         {workoutStarted && (
           <button
             onClick={resetWorkout}
-            className="w-full mt-6 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400 hover:bg-zinc-800 hover:text-white transition-colors"
+            className="w-full mt-6 py-4 bg-zinc-900/50 border border-zinc-800 rounded-2xl text-zinc-500 hover:bg-red-950/30 hover:border-red-900/50 hover:text-red-400 transition-all duration-300"
           >
             Reset Workout
           </button>
@@ -403,35 +481,75 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-800 px-4 py-6 mt-12">
-        <p className="text-center text-zinc-600 text-sm">Built for gains. No excuses.</p>
+      <footer className="relative border-t border-zinc-900 px-4 py-8 mt-16">
+        <div className="max-w-2xl mx-auto text-center">
+          <p className="text-zinc-700 text-sm">Built for gains. No excuses.</p>
+        </div>
       </footer>
     </div>
   );
 }
 
-function ExerciseCard({ exercise, onToggleSet, onDelete, onUpdateWeight, showWeight }) {
+function ExerciseCard({ exercise, index, onToggleSet, onDelete, onUpdateWeight, showWeight, accentColor }) {
   const [isEditing, setIsEditing] = useState(false);
   const [tempWeight, setTempWeight] = useState(exercise.weight);
   const [showNotes, setShowNotes] = useState(false);
   const completedCount = exercise.completed.filter(Boolean).length;
   const isComplete = completedCount === exercise.sets;
 
+  const accentClasses = {
+    orange: {
+      gradient: "from-orange-500 to-amber-500",
+      bg: "bg-orange-500",
+      border: "border-orange-500/50",
+      text: "text-orange-400",
+      shadow: "shadow-orange-500/20",
+      noteBg: "from-orange-950/30 to-zinc-900/50",
+      noteBorder: "border-orange-800/30",
+    },
+    emerald: {
+      gradient: "from-emerald-500 to-green-500",
+      bg: "bg-emerald-500",
+      border: "border-emerald-500/50",
+      text: "text-emerald-400",
+      shadow: "shadow-emerald-500/20",
+      noteBg: "from-emerald-950/30 to-zinc-900/50",
+      noteBorder: "border-emerald-800/30",
+    },
+  };
+
+  const accent = accentClasses[accentColor];
+
   return (
     <div
-      className={`bg-zinc-900 border rounded-xl p-4 transition-all ${
-        isComplete ? "border-green-500/50 bg-green-950/20" : "border-zinc-800"
+      className={`group relative bg-gradient-to-br from-zinc-900/90 to-zinc-950/90 backdrop-blur border rounded-2xl p-5 transition-all duration-300 hover:shadow-xl ${
+        isComplete ? `${accent.border} ${accent.shadow} shadow-lg` : "border-zinc-800/80 hover:border-zinc-700"
       }`}
     >
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex items-center gap-2">
-          {isComplete && <span className="text-green-400">✓</span>}
+      {/* Exercise Number Badge */}
+      <div className={`absolute -left-2 -top-2 w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold shadow-lg ${
+        isComplete 
+          ? `bg-gradient-to-br ${accent.gradient} text-white` 
+          : "bg-zinc-800 text-zinc-400 border border-zinc-700"
+      }`}>
+        {index + 1}
+      </div>
+
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center gap-3 pl-4">
+          {isComplete && (
+            <div className={`w-6 h-6 rounded-full ${accent.bg} flex items-center justify-center`}>
+              <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          )}
           <div>
-            <h3 className={`font-semibold ${isComplete ? "text-green-400" : ""}`}>
+            <h3 className={`font-semibold text-lg ${isComplete ? accent.text : "text-white"}`}>
               {exercise.name}
             </h3>
             <p className="text-sm text-zinc-500">
-              {exercise.sets} × {exercise.reps}
+              {exercise.sets} sets × {exercise.reps} reps
             </p>
           </div>
         </div>
@@ -444,7 +562,7 @@ function ExerciseCard({ exercise, onToggleSet, onDelete, onUpdateWeight, showWei
                     type="number"
                     value={tempWeight}
                     onChange={(e) => setTempWeight(parseInt(e.target.value) || 0)}
-                    className="w-16 bg-zinc-800 border border-zinc-600 rounded px-2 py-1 text-sm"
+                    className="w-16 bg-zinc-800 border border-zinc-600 rounded-lg px-2 py-1.5 text-sm text-center"
                     autoFocus
                   />
                   <button
@@ -452,7 +570,7 @@ function ExerciseCard({ exercise, onToggleSet, onDelete, onUpdateWeight, showWei
                       onUpdateWeight(exercise.id, tempWeight);
                       setIsEditing(false);
                     }}
-                    className="text-green-400 text-sm px-2"
+                    className={`${accent.text} text-sm px-2 py-1`}
                   >
                     ✓
                   </button>
@@ -460,7 +578,7 @@ function ExerciseCard({ exercise, onToggleSet, onDelete, onUpdateWeight, showWei
               ) : (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="bg-zinc-800 px-3 py-1 rounded-lg text-sm hover:bg-zinc-700 transition-colors"
+                  className="bg-zinc-800/80 border border-zinc-700 px-3 py-1.5 rounded-lg text-sm hover:bg-zinc-700 transition-colors font-medium"
                 >
                   {exercise.weight} lbs
                 </button>
@@ -470,8 +588,10 @@ function ExerciseCard({ exercise, onToggleSet, onDelete, onUpdateWeight, showWei
           {exercise.notes && (
             <button
               onClick={() => setShowNotes(!showNotes)}
-              className={`text-sm px-2 py-1 rounded-lg transition-colors ${
-                showNotes ? "bg-blue-600 text-white" : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700"
+              className={`w-8 h-8 rounded-lg text-sm transition-all flex items-center justify-center ${
+                showNotes 
+                  ? `bg-gradient-to-br ${accent.gradient} text-white shadow-md` 
+                  : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 border border-zinc-700"
               }`}
             >
               ?
@@ -479,7 +599,7 @@ function ExerciseCard({ exercise, onToggleSet, onDelete, onUpdateWeight, showWei
           )}
           <button
             onClick={() => onDelete(exercise.id)}
-            className="text-zinc-600 hover:text-red-400 transition-colors p-1"
+            className="w-8 h-8 rounded-lg bg-zinc-800/50 text-zinc-600 hover:bg-red-950/50 hover:text-red-400 hover:border-red-900/50 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 border border-transparent"
           >
             ✕
           </button>
@@ -488,22 +608,29 @@ function ExerciseCard({ exercise, onToggleSet, onDelete, onUpdateWeight, showWei
 
       {/* Notes */}
       {showNotes && exercise.notes && (
-        <div className="mb-3 bg-zinc-800/50 rounded-lg p-3">
-          <p className="text-sm text-zinc-300">{exercise.notes}</p>
+        <div className={`mb-4 bg-gradient-to-br ${accent.noteBg} ${accent.noteBorder} border rounded-xl p-4`}>
+          <p className="text-sm text-zinc-300 leading-relaxed">{exercise.notes}</p>
         </div>
       )}
 
       {/* Set Buttons */}
-      <div className="flex gap-2">
-        {exercise.completed.map((isSetComplete, index) => (
+      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+        {exercise.completed.map((isSetComplete, setIndex) => (
           <button
-            key={index}
-            onClick={() => onToggleSet(exercise.id, index)}
-            className={`flex-1 py-3 rounded-lg font-medium transition-all ${
-              isSetComplete ? "bg-green-500 text-black" : "bg-zinc-800 hover:bg-zinc-700"
+            key={setIndex}
+            onClick={() => onToggleSet(exercise.id, setIndex)}
+            className={`relative py-4 rounded-xl font-semibold transition-all duration-300 overflow-hidden ${
+              isSetComplete 
+                ? `bg-gradient-to-br ${accent.gradient} text-white shadow-md ${accent.shadow}` 
+                : "bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/50"
             }`}
           >
-            {index + 1}
+            {isSetComplete && (
+              <div className="absolute inset-0 bg-white/20 opacity-0 hover:opacity-100 transition-opacity" />
+            )}
+            <span className="relative">
+              {isSetComplete ? "✓" : `Set ${setIndex + 1}`}
+            </span>
           </button>
         ))}
       </div>
