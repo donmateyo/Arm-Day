@@ -1,52 +1,131 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
-const workoutPlans = {
+// Initial workout templates
+const defaultWorkoutPlans = {
   arms: {
     name: "Arm Day",
     emoji: "💪",
     description: "Biceps & Triceps Focus",
     color: "orange",
+    defaultRestTime: 90,
     exercises: [
-      { id: 1, name: "Bicep Curls", sets: 4, reps: "10-12", weight: 25, completed: Array(4).fill(false) },
-      { id: 2, name: "Hammer Curls", sets: 3, reps: "12", weight: 20, completed: Array(3).fill(false) },
-      { id: 3, name: "Tricep Pushdowns", sets: 4, reps: "12-15", weight: 40, completed: Array(4).fill(false) },
-      { id: 4, name: "Skull Crushers", sets: 3, reps: "10", weight: 30, completed: Array(3).fill(false) },
-      { id: 5, name: "Concentration Curls", sets: 3, reps: "10 each", weight: 15, completed: Array(3).fill(false) },
+      { id: 1, name: "Bicep Curls", sets: 4, targetReps: 12, weight: 25, reps: Array(4).fill(null), completed: Array(4).fill(false) },
+      { id: 2, name: "Hammer Curls", sets: 3, targetReps: 12, weight: 20, reps: Array(3).fill(null), completed: Array(3).fill(false) },
+      { id: 3, name: "Tricep Pushdowns", sets: 4, targetReps: 15, weight: 40, reps: Array(4).fill(null), completed: Array(4).fill(false) },
+      { id: 4, name: "Skull Crushers", sets: 3, targetReps: 10, weight: 30, reps: Array(3).fill(null), completed: Array(3).fill(false) },
+      { id: 5, name: "Concentration Curls", sets: 3, targetReps: 10, weight: 15, reps: Array(3).fill(null), completed: Array(3).fill(false) },
     ],
   },
   fullbody: {
     name: "Full Body",
     emoji: "🏋️",
-    description: "Bodyweight Only • 3x/Week",
+    description: "Compound Movements • 3x/Week",
     color: "emerald",
+    defaultRestTime: 60,
     exercises: [
-      { id: 101, name: "Push-Ups", sets: 3, reps: "8-15", weight: 0, completed: Array(3).fill(false), notes: "Chest, shoulders, triceps. Gold standard for upper body pushing." },
-      { id: 102, name: "Pull-Ups / Inverted Rows", sets: 3, reps: "5-12", weight: 0, completed: Array(3).fill(false), notes: "Back, biceps. Best bodyweight pull movement." },
-      { id: 103, name: "Bodyweight Squats", sets: 3, reps: "15-20", weight: 0, completed: Array(3).fill(false), notes: "Quads, glutes. Foundation of leg strength." },
-      { id: 104, name: "Lunges", sets: 3, reps: "10 each leg", weight: 0, completed: Array(3).fill(false), notes: "Unilateral leg work. Fixes imbalances." },
-      { id: 105, name: "Glute Bridges", sets: 3, reps: "15-20", weight: 0, completed: Array(3).fill(false), notes: "Glutes, hamstrings. Crucial for hip health." },
-      { id: 106, name: "Plank", sets: 3, reps: "30-60 sec", weight: 0, completed: Array(3).fill(false), notes: "Core stability. Protects your spine." },
-      { id: 107, name: "Dead Bug", sets: 3, reps: "10 each side", weight: 0, completed: Array(3).fill(false), notes: "Deep core. Research-backed for core activation." },
-      { id: 108, name: "Pike Push-Ups", sets: 3, reps: "8-12", weight: 0, completed: Array(3).fill(false), notes: "Shoulders. Progression toward handstand push-ups." },
+      { id: 101, name: "Push-Ups", sets: 3, targetReps: 15, weight: 0, reps: Array(3).fill(null), completed: Array(3).fill(false), notes: "Chest, shoulders, triceps. Gold standard upper body push." },
+      { id: 102, name: "Pull-Ups / Inverted Rows", sets: 3, targetReps: 8, weight: 0, reps: Array(3).fill(null), completed: Array(3).fill(false), notes: "Back, biceps. Best bodyweight pull movement." },
+      { id: 103, name: "Bodyweight Squats", sets: 3, targetReps: 20, weight: 0, reps: Array(3).fill(null), completed: Array(3).fill(false), notes: "Quads, glutes. Foundation of leg strength." },
+      { id: 104, name: "Lunges", sets: 3, targetReps: 10, weight: 0, reps: Array(3).fill(null), completed: Array(3).fill(false), notes: "Unilateral leg work. Fixes imbalances." },
+      { id: 105, name: "Glute Bridges", sets: 3, targetReps: 20, weight: 0, reps: Array(3).fill(null), completed: Array(3).fill(false), notes: "Glutes, hamstrings. Crucial for hip health." },
+      { id: 106, name: "Plank", sets: 3, targetReps: 45, weight: 0, reps: Array(3).fill(null), completed: Array(3).fill(false), notes: "Core stability. Hold for seconds instead of reps." },
+      { id: 107, name: "Dead Bug", sets: 3, targetReps: 10, weight: 0, reps: Array(3).fill(null), completed: Array(3).fill(false), notes: "Deep core activation. Each side counts as 1." },
+      { id: 108, name: "Pike Push-Ups", sets: 3, targetReps: 10, weight: 0, reps: Array(3).fill(null), completed: Array(3).fill(false), notes: "Shoulders. Progress toward handstand push-ups." },
     ],
   },
 };
 
+// Helper to load from localStorage
+const loadFromStorage = (key, defaultValue) => {
+  if (typeof window === "undefined") return defaultValue;
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+};
+
+// Helper to save to localStorage
+const saveToStorage = (key, value) => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
+    console.error("Failed to save to localStorage:", e);
+  }
+};
+
 export default function Home() {
+  const [isLoaded, setIsLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("fullbody");
-  const [workouts, setWorkouts] = useState(workoutPlans);
+  const [workouts, setWorkouts] = useState(defaultWorkoutPlans);
+  const [history, setHistory] = useState([]);
+  const [settings, setSettings] = useState({
+    defaultRestTime: 60,
+    autoStartRest: true,
+    vibrationEnabled: true,
+    soundEnabled: false,
+    progressiveOverloadPercent: 5,
+  });
+  
+  // Workout state
   const [restTimer, setRestTimer] = useState(0);
   const [isResting, setIsResting] = useState(false);
-  const [showAddExercise, setShowAddExercise] = useState(false);
-  const [newExercise, setNewExercise] = useState({ name: "", sets: 3, reps: "10", weight: 0 });
+  const [customRestTime, setCustomRestTime] = useState(60);
   const [workoutStarted, setWorkoutStarted] = useState(false);
   const [workoutTime, setWorkoutTime] = useState(0);
   const [showCongrats, setShowCongrats] = useState(false);
+  
+  // UI state
+  const [showAddExercise, setShowAddExercise] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showProgressiveOverload, setShowProgressiveOverload] = useState(false);
+  const [newExercise, setNewExercise] = useState({ name: "", sets: 3, targetReps: 10, weight: 0 });
+  const [editingReps, setEditingReps] = useState(null); // {exerciseId, setIndex}
 
-  const exercises = workouts[activeTab].exercises;
+  const exercises = workouts[activeTab]?.exercises || [];
   const currentWorkout = workouts[activeTab];
 
+  // Load data from localStorage on mount
+  useEffect(() => {
+    const savedWorkouts = loadFromStorage("workouts", null);
+    const savedHistory = loadFromStorage("workoutHistory", []);
+    const savedSettings = loadFromStorage("workoutSettings", settings);
+    
+    if (savedWorkouts) {
+      setWorkouts(savedWorkouts);
+    }
+    setHistory(savedHistory);
+    setSettings(savedSettings);
+    setCustomRestTime(savedSettings.defaultRestTime || 60);
+    setIsLoaded(true);
+  }, []);
+
+  // Save workouts to localStorage when they change
+  useEffect(() => {
+    if (isLoaded) {
+      saveToStorage("workouts", workouts);
+    }
+  }, [workouts, isLoaded]);
+
+  // Save history to localStorage
+  useEffect(() => {
+    if (isLoaded) {
+      saveToStorage("workoutHistory", history);
+    }
+  }, [history, isLoaded]);
+
+  // Save settings to localStorage
+  useEffect(() => {
+    if (isLoaded) {
+      saveToStorage("workoutSettings", settings);
+    }
+  }, [settings, isLoaded]);
+
+  // Workout timer
   useEffect(() => {
     let interval;
     if (workoutStarted && !showCongrats) {
@@ -55,23 +134,25 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [workoutStarted, showCongrats]);
 
+  // Rest timer
   useEffect(() => {
     let interval;
     if (isResting && restTimer > 0) {
       interval = setInterval(() => setRestTimer((t) => t - 1), 1000);
     } else if (restTimer === 0 && isResting) {
       setIsResting(false);
-      if (typeof window !== "undefined" && "vibrate" in navigator) {
-        navigator.vibrate(200);
+      if (settings.vibrationEnabled && typeof window !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate([200, 100, 200]);
       }
     }
     return () => clearInterval(interval);
-  }, [isResting, restTimer]);
+  }, [isResting, restTimer, settings.vibrationEnabled]);
 
+  // Check for workout completion
   useEffect(() => {
     const allComplete = exercises.every((ex) => ex.completed.every((set) => set));
-    if (allComplete && exercises.length > 0 && workoutStarted) {
-      setShowCongrats(true);
+    if (allComplete && exercises.length > 0 && workoutStarted && !showCongrats) {
+      completeWorkout();
     }
   }, [exercises, workoutStarted]);
 
@@ -81,13 +162,66 @@ export default function Home() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const startRest = (seconds) => {
-    setRestTimer(seconds);
-    setIsResting(true);
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", { 
+      weekday: "short", 
+      month: "short", 
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
   };
 
-  const toggleSet = (exerciseId, setIndex) => {
+  const startRest = useCallback((seconds) => {
+    setRestTimer(seconds || customRestTime);
+    setIsResting(true);
+  }, [customRestTime]);
+
+  const completeWorkout = () => {
+    // Calculate stats
+    const totalVolume = exercises.reduce((acc, ex) => {
+      const completedReps = ex.reps.filter((r, i) => ex.completed[i] && r !== null);
+      return acc + completedReps.reduce((sum, reps) => sum + (reps * ex.weight), 0);
+    }, 0);
+
+    const totalReps = exercises.reduce((acc, ex) => {
+      return acc + ex.reps.filter((r, i) => ex.completed[i] && r !== null).reduce((sum, r) => sum + r, 0);
+    }, 0);
+
+    const completedSets = exercises.reduce((acc, ex) => acc + ex.completed.filter(Boolean).length, 0);
+
+    // Create history entry
+    const historyEntry = {
+      id: Date.now(),
+      date: new Date().toISOString(),
+      workoutType: activeTab,
+      workoutName: currentWorkout.name,
+      duration: workoutTime,
+      exercises: exercises.map(ex => ({
+        name: ex.name,
+        sets: ex.completed.map((completed, i) => ({
+          completed,
+          reps: ex.reps[i],
+          weight: ex.weight,
+          targetReps: ex.targetReps
+        }))
+      })),
+      stats: {
+        totalVolume,
+        totalReps,
+        completedSets,
+        totalSets: exercises.reduce((acc, ex) => acc + ex.sets, 0)
+      }
+    };
+
+    setHistory(prev => [historyEntry, ...prev].slice(0, 100)); // Keep last 100 workouts
+    setShowCongrats(true);
+  };
+
+  const toggleSet = (exerciseId, setIndex, repsCompleted = null) => {
     if (!workoutStarted) setWorkoutStarted(true);
+    
     setWorkouts((prev) => ({
       ...prev,
       [activeTab]: {
@@ -95,8 +229,40 @@ export default function Home() {
         exercises: prev[activeTab].exercises.map((ex) => {
           if (ex.id === exerciseId) {
             const newCompleted = [...ex.completed];
-            newCompleted[setIndex] = !newCompleted[setIndex];
-            return { ...ex, completed: newCompleted };
+            const newReps = [...ex.reps];
+            const wasCompleted = newCompleted[setIndex];
+            
+            newCompleted[setIndex] = !wasCompleted;
+            
+            if (!wasCompleted) {
+              // If completing, set reps to provided value or target
+              newReps[setIndex] = repsCompleted !== null ? repsCompleted : ex.targetReps;
+            }
+            
+            return { ...ex, completed: newCompleted, reps: newReps };
+          }
+          return ex;
+        }),
+      },
+    }));
+
+    // Auto-start rest timer if enabled and completing a set
+    const exercise = exercises.find(ex => ex.id === exerciseId);
+    if (exercise && !exercise.completed[setIndex] && settings.autoStartRest) {
+      startRest(customRestTime);
+    }
+  };
+
+  const updateReps = (exerciseId, setIndex, reps) => {
+    setWorkouts((prev) => ({
+      ...prev,
+      [activeTab]: {
+        ...prev[activeTab],
+        exercises: prev[activeTab].exercises.map((ex) => {
+          if (ex.id === exerciseId) {
+            const newReps = [...ex.reps];
+            newReps[setIndex] = reps;
+            return { ...ex, reps: newReps };
           }
           return ex;
         }),
@@ -116,14 +282,15 @@ export default function Home() {
             id: Date.now(),
             name: newExercise.name,
             sets: newExercise.sets,
-            reps: newExercise.reps,
+            targetReps: newExercise.targetReps,
             weight: newExercise.weight,
+            reps: Array(newExercise.sets).fill(null),
             completed: Array(newExercise.sets).fill(false),
           },
         ],
       },
     }));
-    setNewExercise({ name: "", sets: 3, reps: "10", weight: 0 });
+    setNewExercise({ name: "", sets: 3, targetReps: 10, weight: 0 });
     setShowAddExercise(false);
   };
 
@@ -137,13 +304,13 @@ export default function Home() {
     }));
   };
 
-  const updateWeight = (id, newWeight) => {
+  const updateExercise = (id, updates) => {
     setWorkouts((prev) => ({
       ...prev,
       [activeTab]: {
         ...prev[activeTab],
         exercises: prev[activeTab].exercises.map((ex) =>
-          ex.id === id ? { ...ex, weight: newWeight } : ex
+          ex.id === id ? { ...ex, ...updates } : ex
         ),
       },
     }));
@@ -157,6 +324,7 @@ export default function Home() {
         exercises: prev[activeTab].exercises.map((ex) => ({
           ...ex,
           completed: Array(ex.sets).fill(false),
+          reps: Array(ex.sets).fill(null),
         })),
       },
     }));
@@ -172,9 +340,85 @@ export default function Home() {
     setShowCongrats(false);
   };
 
+  // Progressive Overload Logic
+  const calculateProgressiveOverload = () => {
+    const workoutHistory = history.filter(h => h.workoutType === activeTab);
+    if (workoutHistory.length < 2) return null;
+
+    const lastWorkout = workoutHistory[0];
+    const suggestions = [];
+
+    exercises.forEach(exercise => {
+      const lastExerciseData = lastWorkout.exercises.find(e => e.name === exercise.name);
+      if (!lastExerciseData) return;
+
+      const lastCompletedSets = lastExerciseData.sets.filter(s => s.completed);
+      const allSetsHitTarget = lastCompletedSets.every(s => s.reps >= s.targetReps);
+      const avgReps = lastCompletedSets.length > 0 
+        ? lastCompletedSets.reduce((sum, s) => sum + (s.reps || 0), 0) / lastCompletedSets.length 
+        : 0;
+
+      if (allSetsHitTarget && lastCompletedSets.length === exercise.sets) {
+        if (exercise.weight > 0) {
+          // Suggest weight increase
+          const increase = Math.max(2.5, exercise.weight * (settings.progressiveOverloadPercent / 100));
+          suggestions.push({
+            exerciseId: exercise.id,
+            exerciseName: exercise.name,
+            type: "weight",
+            currentValue: exercise.weight,
+            suggestedValue: Math.round((exercise.weight + increase) * 2) / 2, // Round to nearest 0.5
+            reason: `Hit all ${exercise.sets}×${exercise.targetReps} last session`
+          });
+        } else {
+          // Bodyweight - suggest rep increase
+          suggestions.push({
+            exerciseId: exercise.id,
+            exerciseName: exercise.name,
+            type: "reps",
+            currentValue: exercise.targetReps,
+            suggestedValue: exercise.targetReps + 2,
+            reason: `Completed all sets at ${exercise.targetReps} reps`
+          });
+        }
+      } else if (avgReps < exercise.targetReps * 0.7) {
+        // Struggling - suggest deload
+        if (exercise.weight > 0) {
+          suggestions.push({
+            exerciseId: exercise.id,
+            exerciseName: exercise.name,
+            type: "deload",
+            currentValue: exercise.weight,
+            suggestedValue: Math.round(exercise.weight * 0.9 * 2) / 2,
+            reason: `Avg ${Math.round(avgReps)} reps vs target ${exercise.targetReps}`
+          });
+        }
+      }
+    });
+
+    return suggestions;
+  };
+
+  const applyProgressiveOverload = (suggestion) => {
+    if (suggestion.type === "weight" || suggestion.type === "deload") {
+      updateExercise(suggestion.exerciseId, { weight: suggestion.suggestedValue });
+    } else if (suggestion.type === "reps") {
+      updateExercise(suggestion.exerciseId, { targetReps: suggestion.suggestedValue });
+    }
+  };
+
   const completedSets = exercises.reduce((acc, ex) => acc + ex.completed.filter(Boolean).length, 0);
   const totalSets = exercises.reduce((acc, ex) => acc + ex.sets, 0);
   const progress = totalSets > 0 ? (completedSets / totalSets) * 100 : 0;
+  const progressiveSuggestions = calculateProgressiveOverload();
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+        <div className="animate-pulse text-zinc-500">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden">
@@ -189,72 +433,65 @@ export default function Home() {
 
       {/* Congrats Modal */}
       {showCongrats && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="relative bg-gradient-to-b from-zinc-900 to-zinc-950 border border-zinc-800 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl">
-            <div className="absolute inset-0 rounded-3xl bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
-            <div className="relative">
-              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center shadow-lg shadow-green-500/25">
-                <span className="text-4xl">🏆</span>
-              </div>
-              <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
-                Workout Complete!
-              </h2>
-              <p className="text-zinc-400 mb-8">
-                You crushed {currentWorkout.name} in {formatTime(workoutTime)}
-              </p>
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                <div className="bg-zinc-800/50 backdrop-blur rounded-2xl p-4 border border-zinc-700/50">
-                  <p className="text-3xl font-bold text-green-400">{totalSets}</p>
-                  <p className="text-zinc-500 text-sm">Sets Completed</p>
-                </div>
-                <div className="bg-zinc-800/50 backdrop-blur rounded-2xl p-4 border border-zinc-700/50">
-                  <p className="text-3xl font-bold text-blue-400">{exercises.length}</p>
-                  <p className="text-zinc-500 text-sm">Exercises Done</p>
-                </div>
-              </div>
-              <button
-                onClick={resetWorkout}
-                className="w-full bg-gradient-to-r from-white to-zinc-200 text-black font-semibold py-4 rounded-2xl hover:opacity-90 transition-all shadow-lg shadow-white/10"
-              >
-                Start New Workout
-              </button>
-            </div>
-          </div>
-        </div>
+        <CongratsModal 
+          workout={currentWorkout}
+          workoutTime={workoutTime}
+          exercises={exercises}
+          totalSets={totalSets}
+          formatTime={formatTime}
+          onClose={resetWorkout}
+          history={history}
+          activeTab={activeTab}
+        />
       )}
 
       {/* Rest Timer Overlay */}
       {isResting && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center z-40">
-          <div className="text-center">
-            <div className="relative">
-              <div className="absolute inset-0 animate-ping opacity-20">
-                <div className="w-48 h-48 mx-auto rounded-full border-4 border-white" />
-              </div>
-              <div className="relative w-48 h-48 mx-auto rounded-full border-4 border-zinc-700 flex items-center justify-center mb-6">
-                <div>
-                  <p className="text-6xl font-bold font-mono">{restTimer}</p>
-                  <p className="text-zinc-500 text-sm uppercase tracking-widest">seconds</p>
-                </div>
-              </div>
-            </div>
-            <p className="text-zinc-400 mb-8 text-lg">Rest & Recover</p>
-            <button
-              onClick={() => setIsResting(false)}
-              className="px-8 py-3 bg-zinc-900 border border-zinc-700 rounded-xl hover:bg-zinc-800 transition-all text-zinc-300"
-            >
-              Skip Rest →
-            </button>
-          </div>
-        </div>
+        <RestTimerOverlay 
+          restTimer={restTimer}
+          onSkip={() => setIsResting(false)}
+          customRestTime={customRestTime}
+        />
+      )}
+
+      {/* History Modal */}
+      {showHistory && (
+        <HistoryModal 
+          history={history}
+          onClose={() => setShowHistory(false)}
+          formatTime={formatTime}
+          formatDate={formatDate}
+          onClearHistory={() => setHistory([])}
+        />
+      )}
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <SettingsModal 
+          settings={settings}
+          setSettings={setSettings}
+          customRestTime={customRestTime}
+          setCustomRestTime={setCustomRestTime}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      {/* Progressive Overload Modal */}
+      {showProgressiveOverload && progressiveSuggestions && (
+        <ProgressiveOverloadModal 
+          suggestions={progressiveSuggestions}
+          onApply={applyProgressiveOverload}
+          onClose={() => setShowProgressiveOverload(false)}
+          accentColor={activeTab === "arms" ? "orange" : "emerald"}
+        />
       )}
 
       {/* Header */}
       <header className="sticky top-0 z-30">
         <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" />
         <div className="relative max-w-2xl mx-auto px-4 py-4">
-          {/* Brand & Timer */}
-          <div className="flex justify-between items-start mb-6">
+          {/* Top Row */}
+          <div className="flex justify-between items-start mb-4">
             <div>
               <p className="text-xs font-medium text-zinc-500 uppercase tracking-widest mb-1">Workout Tracker</p>
               <h1 className="text-2xl font-bold tracking-tight flex items-center gap-3">
@@ -266,22 +503,31 @@ export default function Home() {
                 </span>
               </h1>
             </div>
-            <div className="text-right">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowHistory(true)}
+                className="w-10 h-10 bg-zinc-900/80 border border-zinc-800 rounded-xl flex items-center justify-center hover:bg-zinc-800 transition-all"
+                title="History"
+              >
+                📊
+              </button>
+              <button
+                onClick={() => setShowSettings(true)}
+                className="w-10 h-10 bg-zinc-900/80 border border-zinc-800 rounded-xl flex items-center justify-center hover:bg-zinc-800 transition-all"
+                title="Settings"
+              >
+                ⚙️
+              </button>
               {workoutStarted ? (
-                <div className="bg-zinc-900/80 backdrop-blur border border-zinc-800 rounded-2xl px-4 py-2">
-                  <p className="text-2xl font-mono font-bold tracking-tight">{formatTime(workoutTime)}</p>
-                  <p className="text-xs text-zinc-500 uppercase tracking-wider">Duration</p>
+                <div className="bg-zinc-900/80 backdrop-blur border border-zinc-800 rounded-2xl px-4 py-2 ml-2">
+                  <p className="text-xl font-mono font-bold tracking-tight">{formatTime(workoutTime)}</p>
                 </div>
-              ) : (
-                <div className="bg-zinc-900/50 border border-zinc-800/50 rounded-2xl px-4 py-2">
-                  <p className="text-sm text-zinc-500">Ready</p>
-                </div>
-              )}
+              ) : null}
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-2 p-1 bg-zinc-900/80 rounded-2xl border border-zinc-800/50 mb-5">
+          <div className="flex gap-2 p-1 bg-zinc-900/80 rounded-2xl border border-zinc-800/50 mb-4">
             {Object.entries(workouts).map(([key, workout]) => (
               <button
                 key={key}
@@ -324,53 +570,82 @@ export default function Home() {
 
       {/* Main Content */}
       <main className="relative max-w-2xl mx-auto px-4 py-6">
-        {/* Quick Rest Buttons */}
+        {/* Progressive Overload Alert */}
+        {progressiveSuggestions && progressiveSuggestions.length > 0 && !workoutStarted && (
+          <section className="mb-6">
+            <button
+              onClick={() => setShowProgressiveOverload(true)}
+              className={`w-full relative overflow-hidden rounded-2xl p-4 border transition-all hover:scale-[1.02] ${
+                activeTab === "arms" 
+                  ? "bg-gradient-to-r from-orange-950/50 to-amber-950/30 border-orange-800/30 hover:border-orange-700/50" 
+                  : "bg-gradient-to-r from-emerald-950/50 to-green-950/30 border-emerald-800/30 hover:border-emerald-700/50"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                  activeTab === "arms" ? "bg-orange-500/20" : "bg-emerald-500/20"
+                }`}>
+                  <span className="text-xl">📈</span>
+                </div>
+                <div className="text-left">
+                  <p className={`font-semibold ${activeTab === "arms" ? "text-orange-400" : "text-emerald-400"}`}>
+                    Progressive Overload Available
+                  </p>
+                  <p className="text-sm text-zinc-400">
+                    {progressiveSuggestions.length} suggestion{progressiveSuggestions.length > 1 ? "s" : ""} based on your last workout
+                  </p>
+                </div>
+                <div className="ml-auto text-zinc-500">→</div>
+              </div>
+            </button>
+          </section>
+        )}
+
+        {/* Rest Timer Controls */}
         <section className="mb-8">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-800">
-              <span className="text-sm">⏱️</span>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-800">
+                <span className="text-sm">⏱️</span>
+              </div>
+              <p className="text-sm font-medium text-zinc-300">Rest Timer</p>
             </div>
-            <p className="text-sm font-medium text-zinc-300">Rest Timer</p>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                value={customRestTime}
+                onChange={(e) => setCustomRestTime(Math.max(5, parseInt(e.target.value) || 60))}
+                className="w-16 bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1.5 text-sm text-center"
+              />
+              <span className="text-xs text-zinc-500">sec</span>
+            </div>
           </div>
-          <div className="grid grid-cols-4 gap-2">
-            {[
-              { seconds: 30, label: "30s" },
-              { seconds: 60, label: "1m" },
-              { seconds: 90, label: "1:30" },
-              { seconds: 120, label: "2m" },
-            ].map(({ seconds, label }) => (
+          <div className="grid grid-cols-5 gap-2">
+            {[30, 45, 60, 90, 120].map((seconds) => (
               <button
                 key={seconds}
-                onClick={() => startRest(seconds)}
-                className="group relative bg-zinc-900/80 border border-zinc-800 py-4 rounded-2xl hover:border-zinc-700 hover:bg-zinc-800/80 transition-all duration-300"
+                onClick={() => {
+                  setCustomRestTime(seconds);
+                  startRest(seconds);
+                }}
+                className={`group relative py-3 rounded-xl font-medium transition-all duration-300 ${
+                  customRestTime === seconds 
+                    ? activeTab === "arms"
+                      ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white"
+                      : "bg-gradient-to-r from-emerald-500 to-green-500 text-white"
+                    : "bg-zinc-900/80 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/80"
+                }`}
               >
-                <span className="block text-lg font-semibold text-white group-hover:scale-110 transition-transform">
-                  {label}
-                </span>
+                {seconds < 60 ? `${seconds}s` : `${seconds / 60}m${seconds % 60 ? seconds % 60 : ""}`}
               </button>
             ))}
           </div>
+          {settings.autoStartRest && (
+            <p className="text-xs text-zinc-600 mt-2 text-center">
+              Timer auto-starts after completing a set
+            </p>
+          )}
         </section>
-
-        {/* Science Note for Full Body */}
-        {activeTab === "fullbody" && (
-          <section className="mb-8">
-            <div className="relative overflow-hidden bg-gradient-to-br from-emerald-950/50 to-zinc-900/50 border border-emerald-800/30 rounded-2xl p-5">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl" />
-              <div className="relative flex gap-4">
-                <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center shrink-0">
-                  <span className="text-lg">🧬</span>
-                </div>
-                <div>
-                  <p className="font-semibold text-emerald-400 mb-1">Science-Backed Routine</p>
-                  <p className="text-sm text-zinc-400 leading-relaxed">
-                    Compound movements targeting all major muscle groups. Research shows 3x/week full-body training is optimal for strength and hypertrophy. Rest 48 hours between sessions.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-        )}
 
         {/* Exercise List */}
         <section className="space-y-3">
@@ -388,7 +663,10 @@ export default function Home() {
               index={index}
               onToggleSet={toggleSet}
               onDelete={deleteExercise}
-              onUpdateWeight={updateWeight}
+              onUpdateExercise={updateExercise}
+              onUpdateReps={updateReps}
+              editingReps={editingReps}
+              setEditingReps={setEditingReps}
               showWeight={activeTab === "arms"}
               accentColor={activeTab === "arms" ? "orange" : "emerald"}
             />
@@ -421,11 +699,11 @@ export default function Home() {
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-zinc-500 block mb-2 uppercase tracking-wider">Reps</label>
+                  <label className="text-xs text-zinc-500 block mb-2 uppercase tracking-wider">Target Reps</label>
                   <input
-                    type="text"
-                    value={newExercise.reps}
-                    onChange={(e) => setNewExercise({ ...newExercise, reps: e.target.value })}
+                    type="number"
+                    value={newExercise.targetReps}
+                    onChange={(e) => setNewExercise({ ...newExercise, targetReps: parseInt(e.target.value) || 1 })}
                     className="w-full bg-zinc-800/50 border border-zinc-700 rounded-xl px-3 py-3 text-center focus:outline-none focus:border-zinc-500 transition-all"
                   />
                 </div>
@@ -490,10 +768,24 @@ export default function Home() {
   );
 }
 
-function ExerciseCard({ exercise, index, onToggleSet, onDelete, onUpdateWeight, showWeight, accentColor }) {
+// Exercise Card Component
+function ExerciseCard({ 
+  exercise, 
+  index, 
+  onToggleSet, 
+  onDelete, 
+  onUpdateExercise,
+  onUpdateReps,
+  editingReps,
+  setEditingReps,
+  showWeight, 
+  accentColor 
+}) {
   const [isEditing, setIsEditing] = useState(false);
-  const [tempWeight, setTempWeight] = useState(exercise.weight);
   const [showNotes, setShowNotes] = useState(false);
+  const [tempWeight, setTempWeight] = useState(exercise.weight);
+  const [tempTargetReps, setTempTargetReps] = useState(exercise.targetReps);
+  
   const completedCount = exercise.completed.filter(Boolean).length;
   const isComplete = completedCount === exercise.sets;
 
@@ -504,8 +796,7 @@ function ExerciseCard({ exercise, index, onToggleSet, onDelete, onUpdateWeight, 
       border: "border-orange-500/50",
       text: "text-orange-400",
       shadow: "shadow-orange-500/20",
-      noteBg: "from-orange-950/30 to-zinc-900/50",
-      noteBorder: "border-orange-800/30",
+      lightBg: "bg-orange-500/20",
     },
     emerald: {
       gradient: "from-emerald-500 to-green-500",
@@ -513,12 +804,21 @@ function ExerciseCard({ exercise, index, onToggleSet, onDelete, onUpdateWeight, 
       border: "border-emerald-500/50",
       text: "text-emerald-400",
       shadow: "shadow-emerald-500/20",
-      noteBg: "from-emerald-950/30 to-zinc-900/50",
-      noteBorder: "border-emerald-800/30",
+      lightBg: "bg-emerald-500/20",
     },
   };
 
   const accent = accentClasses[accentColor];
+
+  const handleRepsClick = (setIndex) => {
+    if (exercise.completed[setIndex]) {
+      setEditingReps({ exerciseId: exercise.id, setIndex });
+    }
+  };
+
+  const handleRepsChange = (setIndex, value) => {
+    onUpdateReps(exercise.id, setIndex, parseInt(value) || 0);
+  };
 
   return (
     <div
@@ -549,66 +849,83 @@ function ExerciseCard({ exercise, index, onToggleSet, onDelete, onUpdateWeight, 
               {exercise.name}
             </h3>
             <p className="text-sm text-zinc-500">
-              {exercise.sets} sets × {exercise.reps} reps
+              {exercise.sets} sets × {exercise.targetReps} {exercise.notes?.includes("seconds") || exercise.notes?.includes("sec") ? "sec" : "reps"}
+              {exercise.weight > 0 && ` @ ${exercise.weight} lbs`}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {showWeight && (
-            <>
-              {isEditing ? (
-                <div className="flex items-center gap-1">
+          {isEditing ? (
+            <div className="flex items-center gap-2 bg-zinc-800 rounded-xl p-2">
+              {showWeight && (
+                <div className="flex flex-col items-center">
+                  <span className="text-xs text-zinc-500 mb-1">Weight</span>
                   <input
                     type="number"
                     value={tempWeight}
                     onChange={(e) => setTempWeight(parseInt(e.target.value) || 0)}
-                    className="w-16 bg-zinc-800 border border-zinc-600 rounded-lg px-2 py-1.5 text-sm text-center"
-                    autoFocus
+                    className="w-16 bg-zinc-700 border border-zinc-600 rounded-lg px-2 py-1 text-sm text-center"
                   />
-                  <button
-                    onClick={() => {
-                      onUpdateWeight(exercise.id, tempWeight);
-                      setIsEditing(false);
-                    }}
-                    className={`${accent.text} text-sm px-2 py-1`}
-                  >
-                    ✓
-                  </button>
                 </div>
-              ) : (
+              )}
+              <div className="flex flex-col items-center">
+                <span className="text-xs text-zinc-500 mb-1">Reps</span>
+                <input
+                  type="number"
+                  value={tempTargetReps}
+                  onChange={(e) => setTempTargetReps(parseInt(e.target.value) || 1)}
+                  className="w-16 bg-zinc-700 border border-zinc-600 rounded-lg px-2 py-1 text-sm text-center"
+                />
+              </div>
+              <button
+                onClick={() => {
+                  onUpdateExercise(exercise.id, { weight: tempWeight, targetReps: tempTargetReps });
+                  setIsEditing(false);
+                }}
+                className={`${accent.text} px-2 py-1 text-xl`}
+              >
+                ✓
+              </button>
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={() => {
+                  setTempWeight(exercise.weight);
+                  setTempTargetReps(exercise.targetReps);
+                  setIsEditing(true);
+                }}
+                className="w-8 h-8 rounded-lg bg-zinc-800/50 text-zinc-400 hover:bg-zinc-700 transition-all flex items-center justify-center border border-zinc-700/50"
+                title="Edit exercise"
+              >
+                ✏️
+              </button>
+              {exercise.notes && (
                 <button
-                  onClick={() => setIsEditing(true)}
-                  className="bg-zinc-800/80 border border-zinc-700 px-3 py-1.5 rounded-lg text-sm hover:bg-zinc-700 transition-colors font-medium"
+                  onClick={() => setShowNotes(!showNotes)}
+                  className={`w-8 h-8 rounded-lg text-sm transition-all flex items-center justify-center ${
+                    showNotes 
+                      ? `bg-gradient-to-br ${accent.gradient} text-white shadow-md` 
+                      : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 border border-zinc-700"
+                  }`}
                 >
-                  {exercise.weight} lbs
+                  ?
                 </button>
               )}
+              <button
+                onClick={() => onDelete(exercise.id)}
+                className="w-8 h-8 rounded-lg bg-zinc-800/50 text-zinc-600 hover:bg-red-950/50 hover:text-red-400 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 border border-transparent hover:border-red-900/50"
+              >
+                ✕
+              </button>
             </>
           )}
-          {exercise.notes && (
-            <button
-              onClick={() => setShowNotes(!showNotes)}
-              className={`w-8 h-8 rounded-lg text-sm transition-all flex items-center justify-center ${
-                showNotes 
-                  ? `bg-gradient-to-br ${accent.gradient} text-white shadow-md` 
-                  : "bg-zinc-800 text-zinc-400 hover:bg-zinc-700 border border-zinc-700"
-              }`}
-            >
-              ?
-            </button>
-          )}
-          <button
-            onClick={() => onDelete(exercise.id)}
-            className="w-8 h-8 rounded-lg bg-zinc-800/50 text-zinc-600 hover:bg-red-950/50 hover:text-red-400 hover:border-red-900/50 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 border border-transparent"
-          >
-            ✕
-          </button>
         </div>
       </div>
 
       {/* Notes */}
       {showNotes && exercise.notes && (
-        <div className={`mb-4 bg-gradient-to-br ${accent.noteBg} ${accent.noteBorder} border rounded-xl p-4`}>
+        <div className={`mb-4 ${accent.lightBg} rounded-xl p-4 border border-zinc-700/50`}>
           <p className="text-sm text-zinc-300 leading-relaxed">{exercise.notes}</p>
         </div>
       )}
@@ -616,23 +933,528 @@ function ExerciseCard({ exercise, index, onToggleSet, onDelete, onUpdateWeight, 
       {/* Set Buttons */}
       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
         {exercise.completed.map((isSetComplete, setIndex) => (
-          <button
-            key={setIndex}
-            onClick={() => onToggleSet(exercise.id, setIndex)}
-            className={`relative py-4 rounded-xl font-semibold transition-all duration-300 overflow-hidden ${
-              isSetComplete 
-                ? `bg-gradient-to-br ${accent.gradient} text-white shadow-md ${accent.shadow}` 
-                : "bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/50"
-            }`}
-          >
-            {isSetComplete && (
-              <div className="absolute inset-0 bg-white/20 opacity-0 hover:opacity-100 transition-opacity" />
+          <div key={setIndex} className="relative">
+            <button
+              onClick={() => onToggleSet(exercise.id, setIndex)}
+              className={`w-full py-4 rounded-xl font-semibold transition-all duration-300 overflow-hidden ${
+                isSetComplete 
+                  ? `bg-gradient-to-br ${accent.gradient} text-white shadow-md ${accent.shadow}` 
+                  : "bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/50"
+              }`}
+            >
+              {isSetComplete ? (
+                <div className="flex flex-col items-center">
+                  <span className="text-lg">✓</span>
+                  <span className="text-xs opacity-80">
+                    {exercise.reps[setIndex] || exercise.targetReps}
+                  </span>
+                </div>
+              ) : (
+                <span>Set {setIndex + 1}</span>
+              )}
+            </button>
+            
+            {/* Edit reps overlay */}
+            {isSetComplete && editingReps?.exerciseId === exercise.id && editingReps?.setIndex === setIndex && (
+              <div className="absolute inset-0 bg-zinc-900 rounded-xl p-2 flex flex-col items-center justify-center z-10 border border-zinc-600">
+                <input
+                  type="number"
+                  value={exercise.reps[setIndex] || ""}
+                  onChange={(e) => handleRepsChange(setIndex, e.target.value)}
+                  className="w-12 bg-zinc-700 rounded px-1 py-0.5 text-center text-sm mb-1"
+                  autoFocus
+                />
+                <button
+                  onClick={() => setEditingReps(null)}
+                  className="text-xs text-zinc-400"
+                >
+                  Done
+                </button>
+              </div>
             )}
-            <span className="relative">
-              {isSetComplete ? "✓" : `Set ${setIndex + 1}`}
-            </span>
-          </button>
+            
+            {/* Tap to edit hint */}
+            {isSetComplete && !editingReps && (
+              <button
+                onClick={() => handleRepsClick(setIndex)}
+                className="absolute bottom-1 right-1 text-xs opacity-0 group-hover:opacity-50 transition-opacity"
+              >
+                tap to edit
+              </button>
+            )}
+          </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// Rest Timer Overlay Component
+function RestTimerOverlay({ restTimer, onSkip, customRestTime }) {
+  const progress = ((customRestTime - restTimer) / customRestTime) * 100;
+  
+  return (
+    <div className="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center z-40">
+      <div className="text-center">
+        <div className="relative w-56 h-56 mx-auto mb-8">
+          {/* Background circle */}
+          <svg className="w-full h-full transform -rotate-90">
+            <circle
+              cx="112"
+              cy="112"
+              r="100"
+              stroke="#27272a"
+              strokeWidth="8"
+              fill="none"
+            />
+            <circle
+              cx="112"
+              cy="112"
+              r="100"
+              stroke="url(#gradient)"
+              strokeWidth="8"
+              fill="none"
+              strokeLinecap="round"
+              strokeDasharray={628}
+              strokeDashoffset={628 - (628 * progress) / 100}
+              className="transition-all duration-1000 ease-linear"
+            />
+            <defs>
+              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#22c55e" />
+                <stop offset="100%" stopColor="#10b981" />
+              </linearGradient>
+            </defs>
+          </svg>
+          
+          {/* Timer text */}
+          <div className="absolute inset-0 flex items-center justify-center flex-col">
+            <p className="text-6xl font-bold font-mono">{restTimer}</p>
+            <p className="text-zinc-500 text-sm uppercase tracking-widest mt-1">seconds</p>
+          </div>
+        </div>
+        
+        <p className="text-zinc-400 mb-8 text-lg">Rest & Recover</p>
+        <button
+          onClick={onSkip}
+          className="px-8 py-3 bg-zinc-900 border border-zinc-700 rounded-xl hover:bg-zinc-800 transition-all text-zinc-300"
+        >
+          Skip Rest →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Congrats Modal Component
+function CongratsModal({ workout, workoutTime, exercises, totalSets, formatTime, onClose, history, activeTab }) {
+  const totalVolume = exercises.reduce((acc, ex) => {
+    const completedReps = ex.reps.filter((r, i) => ex.completed[i] && r !== null);
+    return acc + completedReps.reduce((sum, reps) => sum + (reps * ex.weight), 0);
+  }, 0);
+
+  const totalReps = exercises.reduce((acc, ex) => {
+    return acc + ex.reps.filter((r, i) => ex.completed[i] && r !== null).reduce((sum, r) => sum + r, 0);
+  }, 0);
+
+  // Compare to last workout
+  const lastWorkout = history.filter(h => h.workoutType === activeTab)[1]; // [1] because [0] is the one we just added
+  let volumeChange = null;
+  if (lastWorkout?.stats?.totalVolume && totalVolume > 0) {
+    volumeChange = ((totalVolume - lastWorkout.stats.totalVolume) / lastWorkout.stats.totalVolume * 100).toFixed(1);
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="relative bg-gradient-to-b from-zinc-900 to-zinc-950 border border-zinc-800 rounded-3xl p-8 max-w-md w-full text-center shadow-2xl">
+        <div className="absolute inset-0 rounded-3xl bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+        <div className="relative">
+          <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center shadow-lg shadow-green-500/25">
+            <span className="text-4xl">🏆</span>
+          </div>
+          <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">
+            Workout Complete!
+          </h2>
+          <p className="text-zinc-400 mb-8">
+            You crushed {workout.name} in {formatTime(workoutTime)}
+          </p>
+          
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div className="bg-zinc-800/50 backdrop-blur rounded-2xl p-4 border border-zinc-700/50">
+              <p className="text-3xl font-bold text-green-400">{totalSets}</p>
+              <p className="text-zinc-500 text-sm">Sets</p>
+            </div>
+            <div className="bg-zinc-800/50 backdrop-blur rounded-2xl p-4 border border-zinc-700/50">
+              <p className="text-3xl font-bold text-blue-400">{totalReps}</p>
+              <p className="text-zinc-500 text-sm">Total Reps</p>
+            </div>
+          </div>
+
+          {totalVolume > 0 && (
+            <div className="bg-zinc-800/50 backdrop-blur rounded-2xl p-4 border border-zinc-700/50 mb-6">
+              <p className="text-3xl font-bold text-purple-400">{totalVolume.toLocaleString()} lbs</p>
+              <p className="text-zinc-500 text-sm">Total Volume</p>
+              {volumeChange && (
+                <p className={`text-sm mt-1 ${parseFloat(volumeChange) >= 0 ? "text-green-400" : "text-red-400"}`}>
+                  {parseFloat(volumeChange) >= 0 ? "↑" : "↓"} {Math.abs(parseFloat(volumeChange))}% vs last workout
+                </p>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={onClose}
+            className="w-full bg-gradient-to-r from-white to-zinc-200 text-black font-semibold py-4 rounded-2xl hover:opacity-90 transition-all shadow-lg shadow-white/10"
+          >
+            Start New Workout
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// History Modal Component
+function HistoryModal({ history, onClose, formatTime, formatDate, onClearHistory }) {
+  const [selectedWorkout, setSelectedWorkout] = useState(null);
+
+  return (
+    <div className="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="relative bg-gradient-to-b from-zinc-900 to-zinc-950 border border-zinc-800 rounded-3xl p-6 max-w-lg w-full max-h-[80vh] overflow-hidden shadow-2xl">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Workout History</h2>
+          <button
+            onClick={onClose}
+            className="w-10 h-10 bg-zinc-800 rounded-xl flex items-center justify-center hover:bg-zinc-700 transition-all"
+          >
+            ✕
+          </button>
+        </div>
+
+        {selectedWorkout ? (
+          <div className="overflow-y-auto max-h-[60vh]">
+            <button
+              onClick={() => setSelectedWorkout(null)}
+              className="text-sm text-zinc-400 hover:text-white mb-4 flex items-center gap-2"
+            >
+              ← Back to history
+            </button>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-semibold">{selectedWorkout.workoutName}</h3>
+                <span className="text-zinc-500 text-sm">{formatTime(selectedWorkout.duration)}</span>
+              </div>
+              <p className="text-zinc-500 text-sm">{formatDate(selectedWorkout.date)}</p>
+              
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                <div className="bg-zinc-800/50 rounded-xl p-3 text-center">
+                  <p className="text-lg font-bold text-green-400">{selectedWorkout.stats.completedSets}</p>
+                  <p className="text-xs text-zinc-500">Sets</p>
+                </div>
+                <div className="bg-zinc-800/50 rounded-xl p-3 text-center">
+                  <p className="text-lg font-bold text-blue-400">{selectedWorkout.stats.totalReps}</p>
+                  <p className="text-xs text-zinc-500">Reps</p>
+                </div>
+                <div className="bg-zinc-800/50 rounded-xl p-3 text-center">
+                  <p className="text-lg font-bold text-purple-400">{selectedWorkout.stats.totalVolume}</p>
+                  <p className="text-xs text-zinc-500">Volume</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                {selectedWorkout.exercises.map((ex, i) => (
+                  <div key={i} className="bg-zinc-800/30 rounded-xl p-4">
+                    <h4 className="font-medium mb-2">{ex.name}</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {ex.sets.map((set, j) => (
+                        <div
+                          key={j}
+                          className={`px-3 py-1 rounded-lg text-sm ${
+                            set.completed
+                              ? "bg-green-500/20 text-green-400"
+                              : "bg-zinc-700 text-zinc-500"
+                          }`}
+                        >
+                          {set.completed ? `${set.reps} reps${set.weight > 0 ? ` @ ${set.weight}lb` : ""}` : "Skipped"}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="overflow-y-auto max-h-[50vh] space-y-2">
+              {history.length === 0 ? (
+                <div className="text-center py-12 text-zinc-500">
+                  <p className="text-4xl mb-4">📊</p>
+                  <p>No workout history yet</p>
+                  <p className="text-sm">Complete a workout to see it here</p>
+                </div>
+              ) : (
+                history.map((workout) => (
+                  <button
+                    key={workout.id}
+                    onClick={() => setSelectedWorkout(workout)}
+                    className="w-full bg-zinc-800/30 hover:bg-zinc-800/50 rounded-xl p-4 text-left transition-all border border-transparent hover:border-zinc-700"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-medium">{workout.workoutName}</h4>
+                        <p className="text-sm text-zinc-500">{formatDate(workout.date)}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-mono">{formatTime(workout.duration)}</p>
+                        <p className="text-xs text-zinc-500">{workout.stats.completedSets} sets</p>
+                      </div>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+            
+            {history.length > 0 && (
+              <button
+                onClick={() => {
+                  if (confirm("Are you sure you want to clear all history?")) {
+                    onClearHistory();
+                  }
+                }}
+                className="w-full mt-4 py-3 border border-zinc-800 rounded-xl text-zinc-500 hover:bg-red-950/30 hover:border-red-900/50 hover:text-red-400 transition-all"
+              >
+                Clear All History
+              </button>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Settings Modal Component
+function SettingsModal({ settings, setSettings, customRestTime, setCustomRestTime, onClose }) {
+  return (
+    <div className="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="relative bg-gradient-to-b from-zinc-900 to-zinc-950 border border-zinc-800 rounded-3xl p-6 max-w-md w-full shadow-2xl">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Settings</h2>
+          <button
+            onClick={onClose}
+            className="w-10 h-10 bg-zinc-800 rounded-xl flex items-center justify-center hover:bg-zinc-700 transition-all"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="space-y-6">
+          {/* Default Rest Time */}
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
+              Default Rest Time
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min="15"
+                max="180"
+                step="15"
+                value={customRestTime}
+                onChange={(e) => {
+                  setCustomRestTime(parseInt(e.target.value));
+                  setSettings(s => ({ ...s, defaultRestTime: parseInt(e.target.value) }));
+                }}
+                className="flex-1"
+              />
+              <span className="w-16 text-center font-mono">{customRestTime}s</span>
+            </div>
+          </div>
+
+          {/* Auto-start Rest */}
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-medium">Auto-start Rest Timer</p>
+              <p className="text-sm text-zinc-500">Start timer after completing a set</p>
+            </div>
+            <button
+              onClick={() => setSettings(s => ({ ...s, autoStartRest: !s.autoStartRest }))}
+              className={`w-14 h-8 rounded-full transition-all ${
+                settings.autoStartRest ? "bg-green-500" : "bg-zinc-700"
+              }`}
+            >
+              <div className={`w-6 h-6 rounded-full bg-white shadow-md transition-transform ${
+                settings.autoStartRest ? "translate-x-7" : "translate-x-1"
+              }`} />
+            </button>
+          </div>
+
+          {/* Vibration */}
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="font-medium">Vibration</p>
+              <p className="text-sm text-zinc-500">Vibrate when rest timer ends</p>
+            </div>
+            <button
+              onClick={() => setSettings(s => ({ ...s, vibrationEnabled: !s.vibrationEnabled }))}
+              className={`w-14 h-8 rounded-full transition-all ${
+                settings.vibrationEnabled ? "bg-green-500" : "bg-zinc-700"
+              }`}
+            >
+              <div className={`w-6 h-6 rounded-full bg-white shadow-md transition-transform ${
+                settings.vibrationEnabled ? "translate-x-7" : "translate-x-1"
+              }`} />
+            </button>
+          </div>
+
+          {/* Progressive Overload % */}
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
+              Progressive Overload Increment
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min="2.5"
+                max="10"
+                step="2.5"
+                value={settings.progressiveOverloadPercent}
+                onChange={(e) => setSettings(s => ({ ...s, progressiveOverloadPercent: parseFloat(e.target.value) }))}
+                className="flex-1"
+              />
+              <span className="w-16 text-center font-mono">{settings.progressiveOverloadPercent}%</span>
+            </div>
+            <p className="text-xs text-zinc-500 mt-1">Weight increase when you hit all target reps</p>
+          </div>
+        </div>
+
+        <button
+          onClick={onClose}
+          className="w-full mt-8 py-3 bg-zinc-800 rounded-xl hover:bg-zinc-700 transition-all font-medium"
+        >
+          Done
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Progressive Overload Modal Component
+function ProgressiveOverloadModal({ suggestions, onApply, onClose, accentColor }) {
+  const [applied, setApplied] = useState(new Set());
+
+  const handleApply = (suggestion) => {
+    onApply(suggestion);
+    setApplied(prev => new Set([...prev, suggestion.exerciseId]));
+  };
+
+  const accentClasses = {
+    orange: {
+      gradient: "from-orange-500 to-amber-500",
+      bg: "bg-orange-500/20",
+      text: "text-orange-400",
+      border: "border-orange-500/30",
+    },
+    emerald: {
+      gradient: "from-emerald-500 to-green-500",
+      bg: "bg-emerald-500/20",
+      text: "text-emerald-400",
+      border: "border-emerald-500/30",
+    },
+  };
+
+  const accent = accentClasses[accentColor];
+
+  return (
+    <div className="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="relative bg-gradient-to-b from-zinc-900 to-zinc-950 border border-zinc-800 rounded-3xl p-6 max-w-md w-full max-h-[80vh] overflow-hidden shadow-2xl">
+        <div className="flex justify-between items-center mb-2">
+          <h2 className="text-2xl font-bold flex items-center gap-3">
+            <span className={`w-10 h-10 ${accent.bg} rounded-xl flex items-center justify-center`}>
+              📈
+            </span>
+            Progressive Overload
+          </h2>
+          <button
+            onClick={onClose}
+            className="w-10 h-10 bg-zinc-800 rounded-xl flex items-center justify-center hover:bg-zinc-700 transition-all"
+          >
+            ✕
+          </button>
+        </div>
+        
+        <p className="text-zinc-400 text-sm mb-6">
+          Based on your last workout performance, here are suggested adjustments:
+        </p>
+
+        <div className="overflow-y-auto max-h-[50vh] space-y-3">
+          {suggestions.map((suggestion) => (
+            <div
+              key={suggestion.exerciseId}
+              className={`bg-zinc-800/30 rounded-xl p-4 border ${
+                applied.has(suggestion.exerciseId) ? "border-green-500/50" : "border-zinc-700/50"
+              }`}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <h4 className="font-medium">{suggestion.exerciseName}</h4>
+                {suggestion.type === "deload" ? (
+                  <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded-lg">
+                    Deload
+                  </span>
+                ) : (
+                  <span className={`text-xs px-2 py-1 ${accent.bg} ${accent.text} rounded-lg`}>
+                    Increase
+                  </span>
+                )}
+              </div>
+              
+              <p className="text-sm text-zinc-500 mb-3">{suggestion.reason}</p>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-zinc-400">
+                    {suggestion.type === "reps" ? `${suggestion.currentValue} reps` : `${suggestion.currentValue} lbs`}
+                  </span>
+                  <span className="text-zinc-600">→</span>
+                  <span className={suggestion.type === "deload" ? "text-yellow-400" : accent.text}>
+                    {suggestion.type === "reps" ? `${suggestion.suggestedValue} reps` : `${suggestion.suggestedValue} lbs`}
+                  </span>
+                </div>
+                
+                {applied.has(suggestion.exerciseId) ? (
+                  <span className="text-green-400 text-sm">✓ Applied</span>
+                ) : (
+                  <button
+                    onClick={() => handleApply(suggestion)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r ${accent.gradient} text-white`}
+                  >
+                    Apply
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 bg-zinc-800 rounded-xl hover:bg-zinc-700 transition-all font-medium"
+          >
+            {applied.size > 0 ? "Done" : "Skip for Now"}
+          </button>
+          {applied.size === 0 && suggestions.length > 1 && (
+            <button
+              onClick={() => {
+                suggestions.forEach(s => handleApply(s));
+              }}
+              className={`flex-1 py-3 rounded-xl font-medium bg-gradient-to-r ${accent.gradient} text-white`}
+            >
+              Apply All
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
