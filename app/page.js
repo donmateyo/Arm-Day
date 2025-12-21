@@ -52,27 +52,6 @@ const getFullExerciseName = (exercise) => {
   return `${prefix} ${exercise.name}`;
 };
 
-// Helper to load from localStorage
-const loadFromStorage = (key, defaultValue) => {
-  if (typeof window === "undefined") return defaultValue;
-  try {
-    const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : defaultValue;
-  } catch {
-    return defaultValue;
-  }
-};
-
-// Helper to save to localStorage
-const saveToStorage = (key, value) => {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch (e) {
-    console.error("Failed to save to localStorage:", e);
-  }
-};
-
 // Color themes - muted, sophisticated palette
 const colorThemes = {
   rose: {
@@ -96,6 +75,46 @@ const colorThemes = {
     progressBar: "bg-sky-700",
     tabActive: "bg-sky-900/60",
     glow: "bg-sky-900/20",
+  },
+};
+
+// LocalStorage keys
+const STORAGE_KEYS = {
+  WORKOUTS: "workout-tracker-workouts",
+  HISTORY: "workout-tracker-history",
+  SETTINGS: "workout-tracker-settings",
+  CUSTOM_REST: "workout-tracker-custom-rest",
+};
+
+// Safe localStorage helpers
+const safeLocalStorage = {
+  getItem: (key) => {
+    try {
+      if (typeof window !== "undefined") {
+        return localStorage.getItem(key);
+      }
+    } catch (e) {
+      console.warn("localStorage not available:", e);
+    }
+    return null;
+  },
+  setItem: (key, value) => {
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem(key, value);
+      }
+    } catch (e) {
+      console.warn("localStorage not available:", e);
+    }
+  },
+  removeItem: (key) => {
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(key);
+      }
+    } catch (e) {
+      console.warn("localStorage not available:", e);
+    }
   },
 };
 
@@ -134,39 +153,73 @@ export default function Home() {
 
   // Load data from localStorage on mount
   useEffect(() => {
-    const savedWorkouts = loadFromStorage("workouts_v4", null);
-    const savedHistory = loadFromStorage("workoutHistory_v4", []);
-    const savedSettings = loadFromStorage("workoutSettings_v4", settings);
-    
+    const savedWorkouts = safeLocalStorage.getItem(STORAGE_KEYS.WORKOUTS);
+    const savedHistory = safeLocalStorage.getItem(STORAGE_KEYS.HISTORY);
+    const savedSettings = safeLocalStorage.getItem(STORAGE_KEYS.SETTINGS);
+    const savedCustomRest = safeLocalStorage.getItem(STORAGE_KEYS.CUSTOM_REST);
+
     if (savedWorkouts) {
-      setWorkouts(savedWorkouts);
+      try {
+        setWorkouts(JSON.parse(savedWorkouts));
+      } catch (e) {
+        console.error("Error parsing saved workouts:", e);
+      }
     }
-    setHistory(savedHistory);
-    setSettings(savedSettings);
-    setCustomRestTime(savedSettings.defaultRestTime || 90);
+
+    if (savedHistory) {
+      try {
+        setHistory(JSON.parse(savedHistory));
+      } catch (e) {
+        console.error("Error parsing saved history:", e);
+      }
+    }
+
+    if (savedSettings) {
+      try {
+        setSettings(JSON.parse(savedSettings));
+      } catch (e) {
+        console.error("Error parsing saved settings:", e);
+      }
+    }
+
+    if (savedCustomRest) {
+      try {
+        setCustomRestTime(JSON.parse(savedCustomRest));
+      } catch (e) {
+        console.error("Error parsing saved custom rest:", e);
+      }
+    }
+
     setIsLoaded(true);
   }, []);
 
   // Save workouts to localStorage when they change
   useEffect(() => {
     if (isLoaded) {
-      saveToStorage("workouts_v4", workouts);
+      safeLocalStorage.setItem(STORAGE_KEYS.WORKOUTS, JSON.stringify(workouts));
     }
   }, [workouts, isLoaded]);
 
-  // Save history to localStorage
+  // Save history to localStorage when it changes
   useEffect(() => {
     if (isLoaded) {
-      saveToStorage("workoutHistory_v4", history);
+      safeLocalStorage.setItem(STORAGE_KEYS.HISTORY, JSON.stringify(history));
     }
   }, [history, isLoaded]);
 
-  // Save settings to localStorage
+  // Save settings to localStorage when they change
   useEffect(() => {
     if (isLoaded) {
-      saveToStorage("workoutSettings_v4", settings);
+      safeLocalStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
     }
   }, [settings, isLoaded]);
+
+  // Save custom rest time to localStorage when it changes
+  useEffect(() => {
+    if (isLoaded) {
+      safeLocalStorage.setItem(STORAGE_KEYS.CUSTOM_REST, JSON.stringify(customRestTime));
+    }
+  }, [customRestTime, isLoaded]);
 
   // Workout timer
   useEffect(() => {
@@ -184,7 +237,8 @@ export default function Home() {
       interval = setInterval(() => setRestTimer((t) => t - 1), 1000);
     } else if (restTimer === 0 && isResting) {
       setIsResting(false);
-      if (settings.vibrationEnabled && typeof window !== "undefined" && "vibrate" in navigator) {
+      // Vibrate when timer ends
+      if (settings.vibrationEnabled && navigator.vibrate) {
         navigator.vibrate([200, 100, 200]);
       }
     }
@@ -197,7 +251,7 @@ export default function Home() {
     if (allComplete && exercises.length > 0 && workoutStarted && !showCongrats) {
       completeWorkout();
     }
-  }, [exercises, workoutStarted]);
+  }, [exercises, workoutStarted, showCongrats]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -342,6 +396,7 @@ export default function Home() {
             equipment: newExercise.equipment,
             reps: Array(newExercise.sets).fill(null),
             completed: Array(newExercise.sets).fill(false),
+            notes: "",
           },
         ],
       },
@@ -396,10 +451,9 @@ export default function Home() {
     setShowCongrats(false);
   };
 
-  // Progressive Overload Logic
   const calculateProgressiveOverload = () => {
     const workoutHistory = history.filter(h => h.workoutType === activeTab);
-    if (workoutHistory.length < 2) return null;
+    if (workoutHistory.length < 1) return null;
 
     const lastWorkout = workoutHistory[0];
     const suggestions = [];
@@ -424,7 +478,7 @@ export default function Home() {
           suggestedValue: Math.round((exercise.weight + increase) * 2) / 2,
           reason: `Hit ${exercise.targetRepsMax} reps on all ${exercise.sets} sets`
         });
-      } else if (avgReps < exercise.targetRepsMin * 0.8) {
+      } else if (avgReps < exercise.targetRepsMin * 0.8 && lastCompletedSets.length > 0) {
         suggestions.push({
           exerciseId: exercise.id,
           exerciseName: getFullExerciseName(exercise),
@@ -445,6 +499,14 @@ export default function Home() {
     } else if (suggestion.type === "reps") {
       updateExercise(suggestion.exerciseId, { targetRepsMax: suggestion.suggestedValue });
     }
+  };
+
+  const addManualEntry = (entry) => {
+    setHistory(prev => [entry, ...prev].slice(0, 100));
+  };
+
+  const clearHistory = () => {
+    setHistory([]);
   };
 
   const completedSets = exercises.reduce((acc, ex) => acc + ex.completed.filter(Boolean).length, 0);
@@ -493,7 +555,11 @@ export default function Home() {
           onClose={() => setShowHistory(false)}
           formatTime={formatTime}
           formatDate={formatDate}
-          onClearHistory={() => setHistory([])}
+          onClearHistory={clearHistory}
+          workouts={workouts}
+          onAddManualEntry={addManualEntry}
+          getFullExerciseName={getFullExerciseName}
+          equipmentOptions={equipmentOptions}
         />
       )}
 
@@ -606,7 +672,7 @@ export default function Home() {
           <section className="mb-6">
             <button
               onClick={() => setShowProgressiveOverload(true)}
-              className={`w-full relative overflow-hidden rounded-xl p-4 border transition-all hover:border-zinc-600 bg-zinc-900 border-zinc-800`}
+              className="w-full relative overflow-hidden rounded-xl p-4 border transition-all hover:border-zinc-600 bg-zinc-900 border-zinc-800"
             >
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center">
@@ -626,9 +692,9 @@ export default function Home() {
           </section>
         )}
 
-        {/* Rest Timer Controls */}
+        {/* Rest Timer Controls - Simplified */}
         <section className="mb-8">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-800">
                 <span className="text-sm">⏱️</span>
@@ -643,25 +709,13 @@ export default function Home() {
                 className="w-16 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-sm text-center text-zinc-300 focus:outline-none focus:border-zinc-600"
               />
               <span className="text-xs text-zinc-600">sec</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-5 gap-2">
-            {[30, 60, 90, 120, 180].map((seconds) => (
               <button
-                key={seconds}
-                onClick={() => {
-                  setCustomRestTime(seconds);
-                  startRest(seconds);
-                }}
-                className={`py-3 rounded-lg font-medium transition-all duration-200 ${
-                  customRestTime === seconds 
-                    ? `${theme.primary} ${theme.text} border ${theme.border}`
-                    : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-300"
-                }`}
+                onClick={() => startRest(customRestTime)}
+                className={`ml-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${theme.primary} ${theme.text} border ${theme.border} hover:opacity-80`}
               >
-                {seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m${seconds % 60 ? seconds % 60 : ""}`}
+                Start
               </button>
-            ))}
+            </div>
           </div>
           {settings.autoStartRest && (
             <p className="text-xs text-zinc-700 mt-2 text-center">
@@ -843,18 +897,27 @@ function ExerciseCard({
   const [tempTargetRepsMin, setTempTargetRepsMin] = useState(exercise.targetRepsMin);
   const [tempTargetRepsMax, setTempTargetRepsMax] = useState(exercise.targetRepsMax);
   const [tempEquipment, setTempEquipment] = useState(exercise.equipment);
+  const [tempRepsValue, setTempRepsValue] = useState("");
   
   const completedCount = exercise.completed.filter(Boolean).length;
   const isComplete = completedCount === exercise.sets;
 
   const handleRepsClick = (setIndex) => {
     if (exercise.completed[setIndex]) {
+      setTempRepsValue(exercise.reps[setIndex]?.toString() || "");
       setEditingReps({ exerciseId: exercise.id, setIndex });
     }
   };
 
-  const handleRepsChange = (setIndex, value) => {
-    onUpdateReps(exercise.id, setIndex, parseInt(value) || 0);
+  const handleRepsChange = (value) => {
+    setTempRepsValue(value);
+  };
+
+  const handleRepsSave = (setIndex) => {
+    const reps = parseInt(tempRepsValue) || 0;
+    onUpdateReps(exercise.id, setIndex, reps);
+    setEditingReps(null);
+    setTempRepsValue("");
   };
 
   return (
@@ -1031,13 +1094,19 @@ function ExerciseCard({
               <div className="absolute inset-0 bg-zinc-800 rounded-lg p-2 flex flex-col items-center justify-center z-10 border border-zinc-600">
                 <input
                   type="number"
-                  value={exercise.reps[setIndex] || ""}
-                  onChange={(e) => handleRepsChange(setIndex, e.target.value)}
+                  value={tempRepsValue}
+                  onChange={(e) => handleRepsChange(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleRepsSave(setIndex);
+                    }
+                  }}
                   className="w-12 bg-zinc-700 rounded px-1 py-0.5 text-center text-sm mb-1 text-zinc-200"
                   autoFocus
+                  onFocus={(e) => e.target.select()}
                 />
                 <button
-                  onClick={() => setEditingReps(null)}
+                  onClick={() => handleRepsSave(setIndex)}
                   className="text-xs text-zinc-500"
                 >
                   Done
@@ -1175,8 +1244,93 @@ function CongratsModal({ workout, workoutTime, exercises, totalSets, formatTime,
 }
 
 // History Modal Component
-function HistoryModal({ history, onClose, formatTime, formatDate, onClearHistory }) {
+function HistoryModal({ history, onClose, formatTime, formatDate, onClearHistory, workouts, onAddManualEntry, getFullExerciseName, equipmentOptions }) {
   const [selectedWorkout, setSelectedWorkout] = useState(null);
+  const [showManualEntry, setShowManualEntry] = useState(false);
+  const [manualEntry, setManualEntry] = useState({
+    workoutType: "workoutA",
+    date: new Date().toISOString().slice(0, 16),
+    duration: 45,
+    exercises: []
+  });
+
+  const initializeManualExercises = (workoutType) => {
+    const workout = workouts[workoutType];
+    if (!workout) return [];
+    return workout.exercises.map(ex => ({
+      name: ex.name,
+      displayName: getFullExerciseName(ex),
+      equipment: ex.equipment,
+      sets: Array(ex.sets).fill(null).map(() => ({
+        completed: true,
+        reps: ex.targetRepsMax,
+        weight: ex.weight,
+        targetRepsMin: ex.targetRepsMin,
+        targetRepsMax: ex.targetRepsMax
+      }))
+    }));
+  };
+
+  const handleWorkoutTypeChange = (type) => {
+    setManualEntry({
+      ...manualEntry,
+      workoutType: type,
+      exercises: initializeManualExercises(type)
+    });
+  };
+
+  const handleStartManualEntry = () => {
+    setManualEntry({
+      ...manualEntry,
+      exercises: initializeManualExercises(manualEntry.workoutType)
+    });
+    setShowManualEntry(true);
+  };
+
+  const handleExerciseChange = (exerciseIndex, setIndex, field, value) => {
+    const newExercises = [...manualEntry.exercises];
+    newExercises[exerciseIndex].sets[setIndex][field] = field === 'completed' ? value : (parseInt(value) || 0);
+    setManualEntry({ ...manualEntry, exercises: newExercises });
+  };
+
+  const handleSaveManualEntry = () => {
+    const workout = workouts[manualEntry.workoutType];
+    const totalVolume = manualEntry.exercises.reduce((acc, ex) => {
+      return acc + ex.sets.filter(s => s.completed).reduce((sum, s) => sum + (s.reps * s.weight), 0);
+    }, 0);
+    const totalReps = manualEntry.exercises.reduce((acc, ex) => {
+      return acc + ex.sets.filter(s => s.completed).reduce((sum, s) => sum + s.reps, 0);
+    }, 0);
+    const completedSets = manualEntry.exercises.reduce((acc, ex) => {
+      return acc + ex.sets.filter(s => s.completed).length;
+    }, 0);
+    const totalSets = manualEntry.exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
+
+    const entry = {
+      id: Date.now(),
+      date: new Date(manualEntry.date).toISOString(),
+      workoutType: manualEntry.workoutType,
+      workoutName: workout.name,
+      duration: manualEntry.duration * 60,
+      exercises: manualEntry.exercises,
+      stats: {
+        totalVolume,
+        totalReps,
+        completedSets,
+        totalSets
+      },
+      isManual: true
+    };
+
+    onAddManualEntry(entry);
+    setShowManualEntry(false);
+    setManualEntry({
+      workoutType: "workoutA",
+      date: new Date().toISOString().slice(0, 16),
+      duration: 45,
+      exercises: []
+    });
+  };
 
   return (
     <div className="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -1191,7 +1345,114 @@ function HistoryModal({ history, onClose, formatTime, formatDate, onClearHistory
           </button>
         </div>
 
-        {selectedWorkout ? (
+        {showManualEntry ? (
+          <div className="overflow-y-auto max-h-[60vh]">
+            <button
+              onClick={() => setShowManualEntry(false)}
+              className="text-sm text-zinc-500 hover:text-zinc-300 mb-4 flex items-center gap-2"
+            >
+              ← Back
+            </button>
+            
+            <h3 className="text-lg font-semibold text-zinc-200 mb-4">Add Past Workout</h3>
+            
+            <div className="space-y-4">
+              {/* Workout Type */}
+              <div>
+                <label className="text-xs text-zinc-600 block mb-2 uppercase tracking-wider">Workout</label>
+                <div className="flex gap-2">
+                  {Object.entries(workouts).map(([key, workout]) => (
+                    <button
+                      key={key}
+                      onClick={() => handleWorkoutTypeChange(key)}
+                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+                        manualEntry.workoutType === key
+                          ? "bg-zinc-700 text-zinc-200 border border-zinc-600"
+                          : "bg-zinc-800 text-zinc-500 border border-zinc-700 hover:bg-zinc-700"
+                      }`}
+                    >
+                      {workout.emoji} {workout.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Date & Duration */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-zinc-600 block mb-2 uppercase tracking-wider">Date & Time</label>
+                  <input
+                    type="datetime-local"
+                    value={manualEntry.date}
+                    onChange={(e) => setManualEntry({ ...manualEntry, date: e.target.value })}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-600"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs text-zinc-600 block mb-2 uppercase tracking-wider">Duration (min)</label>
+                  <input
+                    type="number"
+                    value={manualEntry.duration}
+                    onChange={(e) => setManualEntry({ ...manualEntry, duration: parseInt(e.target.value) || 0 })}
+                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-center text-zinc-200 focus:outline-none focus:border-zinc-600"
+                  />
+                </div>
+              </div>
+
+              {/* Exercises */}
+              <div>
+                <label className="text-xs text-zinc-600 block mb-2 uppercase tracking-wider">Exercises</label>
+                <div className="space-y-3">
+                  {manualEntry.exercises.map((exercise, exIndex) => (
+                    <div key={exIndex} className="bg-zinc-800/50 rounded-lg p-3 border border-zinc-700">
+                      <p className="text-sm font-medium text-zinc-300 mb-2">{exercise.displayName}</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {exercise.sets.map((set, setIndex) => (
+                          <div key={setIndex} className="flex flex-col gap-1">
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => handleExerciseChange(exIndex, setIndex, 'completed', !set.completed)}
+                                className={`w-5 h-5 rounded flex items-center justify-center text-xs ${
+                                  set.completed ? "bg-zinc-600 text-white" : "bg-zinc-700 text-zinc-500"
+                                }`}
+                              >
+                                {set.completed ? "✓" : ""}
+                              </button>
+                              <span className="text-xs text-zinc-500">Set {setIndex + 1}</span>
+                            </div>
+                            <div className="flex gap-1">
+                              <input
+                                type="number"
+                                value={set.reps}
+                                onChange={(e) => handleExerciseChange(exIndex, setIndex, 'reps', e.target.value)}
+                                placeholder="reps"
+                                className="w-12 bg-zinc-700 border border-zinc-600 rounded px-1 py-0.5 text-xs text-center text-zinc-200"
+                              />
+                              <input
+                                type="number"
+                                value={set.weight}
+                                onChange={(e) => handleExerciseChange(exIndex, setIndex, 'weight', e.target.value)}
+                                placeholder="lbs"
+                                className="w-12 bg-zinc-700 border border-zinc-600 rounded px-1 py-0.5 text-xs text-center text-zinc-200"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={handleSaveManualEntry}
+                className="w-full py-3 bg-zinc-700 rounded-xl font-medium text-zinc-200 hover:bg-zinc-600 transition-all"
+              >
+                Save Workout
+              </button>
+            </div>
+          </div>
+        ) : selectedWorkout ? (
           <div className="overflow-y-auto max-h-[60vh]">
             <button
               onClick={() => setSelectedWorkout(null)}
@@ -1201,7 +1462,10 @@ function HistoryModal({ history, onClose, formatTime, formatDate, onClearHistory
             </button>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-xl font-semibold text-zinc-200">{selectedWorkout.workoutName}</h3>
+                <h3 className="text-xl font-semibold text-zinc-200">
+                  {selectedWorkout.workoutName}
+                  {selectedWorkout.isManual && <span className="ml-2 text-xs bg-zinc-700 px-2 py-0.5 rounded text-zinc-400">Manual</span>}
+                </h3>
                 <span className="text-zinc-500 text-sm">{formatTime(selectedWorkout.duration)}</span>
               </div>
               <p className="text-zinc-600 text-sm">{formatDate(selectedWorkout.date)}</p>
@@ -1246,6 +1510,14 @@ function HistoryModal({ history, onClose, formatTime, formatDate, onClearHistory
           </div>
         ) : (
           <>
+            {/* Add Manual Entry Button */}
+            <button
+              onClick={handleStartManualEntry}
+              className="w-full mb-4 py-3 border border-dashed border-zinc-700 rounded-xl text-zinc-500 hover:border-zinc-600 hover:text-zinc-400 hover:bg-zinc-800/50 transition-all flex items-center justify-center gap-2"
+            >
+              <span>+</span> Add Past Workout
+            </button>
+
             <div className="overflow-y-auto max-h-[50vh] space-y-2">
               {history.length === 0 ? (
                 <div className="text-center py-12 text-zinc-600">
@@ -1262,7 +1534,10 @@ function HistoryModal({ history, onClose, formatTime, formatDate, onClearHistory
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <h4 className="font-medium text-zinc-300">{workout.workoutName}</h4>
+                        <h4 className="font-medium text-zinc-300">
+                          {workout.workoutName}
+                          {workout.isManual && <span className="ml-2 text-xs bg-zinc-700 px-2 py-0.5 rounded text-zinc-400">Manual</span>}
+                        </h4>
                         <p className="text-sm text-zinc-600">{formatDate(workout.date)}</p>
                       </div>
                       <div className="text-right">
