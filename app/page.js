@@ -692,38 +692,6 @@ export default function Home() {
           </section>
         )}
 
-        {/* Rest Timer Controls - Simplified */}
-        <section className="mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-zinc-900 rounded-lg flex items-center justify-center border border-zinc-800">
-                <span className="text-sm">⏱️</span>
-              </div>
-              <p className="text-sm font-medium text-zinc-400">Rest Timer</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="number"
-                value={customRestTime}
-                onChange={(e) => setCustomRestTime(Math.max(5, parseInt(e.target.value) || 60))}
-                className="w-16 bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1.5 text-sm text-center text-zinc-300 focus:outline-none focus:border-zinc-600"
-              />
-              <span className="text-xs text-zinc-600">sec</span>
-              <button
-                onClick={() => startRest(customRestTime)}
-                className={`ml-2 px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${theme.primary} ${theme.text} border ${theme.border} hover:opacity-80`}
-              >
-                Start
-              </button>
-            </div>
-          </div>
-          {settings.autoStartRest && (
-            <p className="text-xs text-zinc-700 mt-2 text-center">
-              Timer auto-starts after completing a set
-            </p>
-          )}
-        </section>
-
         {/* Exercise List */}
         <section className="space-y-3">
           <div className="flex items-center gap-3 mb-4">
@@ -1254,6 +1222,11 @@ function HistoryModal({ history, onClose, formatTime, formatDate, onClearHistory
     exercises: []
   });
 
+  const getEquipmentPrefix = (equipment) => {
+    const eq = equipmentOptions.find(e => e.id === equipment);
+    return eq ? eq.prefix : "DB";
+  };
+
   const initializeManualExercises = (workoutType) => {
     const workout = workouts[workoutType];
     if (!workout) return [];
@@ -1290,6 +1263,13 @@ function HistoryModal({ history, onClose, formatTime, formatDate, onClearHistory
   const handleExerciseChange = (exerciseIndex, setIndex, field, value) => {
     const newExercises = [...manualEntry.exercises];
     newExercises[exerciseIndex].sets[setIndex][field] = field === 'completed' ? value : (parseInt(value) || 0);
+    setManualEntry({ ...manualEntry, exercises: newExercises });
+  };
+
+  const handleEquipmentChange = (exerciseIndex, equipmentId) => {
+    const newExercises = [...manualEntry.exercises];
+    newExercises[exerciseIndex].equipment = equipmentId;
+    newExercises[exerciseIndex].displayName = `${getEquipmentPrefix(equipmentId)} ${newExercises[exerciseIndex].name}`;
     setManualEntry({ ...manualEntry, exercises: newExercises });
   };
 
@@ -1405,7 +1385,26 @@ function HistoryModal({ history, onClose, formatTime, formatDate, onClearHistory
                 <div className="space-y-3">
                   {manualEntry.exercises.map((exercise, exIndex) => (
                     <div key={exIndex} className="bg-zinc-800/50 rounded-lg p-3 border border-zinc-700">
-                      <p className="text-sm font-medium text-zinc-300 mb-2">{exercise.displayName}</p>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-sm font-medium text-zinc-300">{exercise.displayName}</p>
+                        {/* Equipment Toggle */}
+                        <div className="flex gap-1">
+                          {equipmentOptions.map((eq) => (
+                            <button
+                              key={eq.id}
+                              onClick={() => handleEquipmentChange(exIndex, eq.id)}
+                              className={`px-2 py-1 rounded text-xs transition-all ${
+                                exercise.equipment === eq.id
+                                  ? "bg-zinc-600 text-zinc-200"
+                                  : "bg-zinc-700 text-zinc-500 hover:bg-zinc-600"
+                              }`}
+                              title={eq.label}
+                            >
+                              {eq.prefix}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                       <div className="grid grid-cols-3 gap-2">
                         {exercise.sets.map((set, setIndex) => (
                           <div key={setIndex} className="flex flex-col gap-1">
