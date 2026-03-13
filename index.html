@@ -6,76 +6,78 @@
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
-    <title>Arm Hypertrophy App</title>
+    <title>Arm Hypertrophy</title>
     <style>
       :root {
-        --bg: #0a0f1f;
-        --bg-elev: rgba(17, 24, 48, 0.92);
-        --bg-elev-2: rgba(24, 34, 67, 0.98);
-        --card: rgba(14, 20, 41, 0.96);
-        --text: #eef2ff;
-        --muted: #a9b4da;
-        --border: #2c3a73;
-        --accent: #86a3ff;
-        --accent-2: #95ffbf;
+        --bg: #08101f;
+        --bg-2: #0d1730;
+        --panel: rgba(16, 24, 48, 0.96);
+        --panel-2: rgba(22, 32, 62, 0.98);
+        --text: #eef3ff;
+        --muted: #9aa8cf;
+        --border: #2a3972;
+        --accent: #7ea1ff;
+        --accent-2: #8df0b2;
         --warn: #ffd27d;
-        --danger: #ff9a9a;
-        --shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+        --danger: #ff9b9b;
+        --shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
         --radius: 18px;
-        --radius-sm: 12px;
-        --button-bg: #182042;
-        --input-bg: #0c1330;
-        --success-bg: rgba(68, 255, 141, 0.12);
-        --warn-bg: rgba(255, 210, 125, 0.12);
-        --danger-bg: rgba(255, 154, 154, 0.12);
+        --radius-sm: 14px;
+        --input: #0b1430;
+        --chip: #111a38;
+        --good-bg: rgba(99, 255, 145, 0.12);
+        --warn-bg: rgba(255, 210, 125, 0.14);
+        --bad-bg: rgba(255, 155, 155, 0.14);
       }
 
       .light {
-        --bg: #f5f7ff;
-        --bg-elev: rgba(255, 255, 255, 0.96);
-        --bg-elev-2: rgba(245, 248, 255, 0.98);
-        --card: rgba(255, 255, 255, 0.98);
-        --text: #152042;
-        --muted: #56627f;
-        --border: #cdd7f4;
-        --accent: #3b63ff;
-        --accent-2: #0d9d53;
-        --warn: #b77200;
-        --danger: #c52e2e;
-        --shadow: 0 14px 34px rgba(34, 56, 120, 0.12);
-        --button-bg: #eef3ff;
-        --input-bg: #f7f9ff;
-        --success-bg: rgba(13, 157, 83, 0.09);
-        --warn-bg: rgba(183, 114, 0, 0.09);
-        --danger-bg: rgba(197, 46, 46, 0.09);
+        --bg: #f4f7ff;
+        --bg-2: #edf2ff;
+        --panel: rgba(255, 255, 255, 0.98);
+        --panel-2: rgba(247, 249, 255, 0.98);
+        --text: #14203d;
+        --muted: #607097;
+        --border: #d2dcf7;
+        --accent: #3865ff;
+        --accent-2: #0f9e56;
+        --warn: #aa6c00;
+        --danger: #c63a3a;
+        --shadow: 0 10px 30px rgba(40, 70, 150, 0.12);
+        --input: #f7f9ff;
+        --chip: #eff3ff;
+        --good-bg: rgba(15, 158, 86, 0.08);
+        --warn-bg: rgba(170, 108, 0, 0.09);
+        --bad-bg: rgba(198, 58, 58, 0.09);
       }
 
       * {
         box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
       }
 
       html,
       body {
         margin: 0;
         padding: 0;
-        min-height: 100%;
+        height: 100%;
         background:
           radial-gradient(
             circle at top,
-            rgba(70, 110, 255, 0.14),
+            rgba(97, 138, 255, 0.14),
             transparent 28%
           ),
-          linear-gradient(180deg, var(--bg) 0%, var(--bg) 100%);
+          linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
         color: var(--text);
         font-family:
           Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
           "Segoe UI", sans-serif;
+        overflow: hidden;
       }
 
       body {
         transition:
-          background 0.25s ease,
-          color 0.25s ease;
+          background 0.2s ease,
+          color 0.2s ease;
       }
 
       button,
@@ -86,764 +88,773 @@
       }
 
       .app {
-        width: min(1280px, 100%);
+        height: 100dvh;
+        max-width: 460px;
         margin: 0 auto;
-        padding: 16px;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        overflow: hidden;
       }
 
       .topbar {
+        padding:
+          calc(env(safe-area-inset-top, 0px) + 10px) 12px 10px 12px;
         display: grid;
-        grid-template-columns: 1fr;
-        gap: 14px;
-        margin-bottom: 16px;
+        gap: 10px;
+        background: rgba(8, 16, 31, 0.55);
+        backdrop-filter: blur(14px);
+        border-bottom: 1px solid var(--border);
       }
 
-      .hero {
-        background: var(--bg-elev);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 18px;
-        box-shadow: var(--shadow);
+      .light .topbar {
+        background: rgba(255, 255, 255, 0.7);
       }
 
-      .hero-top {
+      .top-row {
         display: flex;
-        gap: 12px;
-        align-items: flex-start;
+        align-items: center;
         justify-content: space-between;
-        flex-wrap: wrap;
+        gap: 10px;
       }
 
-      h1 {
-        margin: 0;
-        font-size: 1.6rem;
+      .brand {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+
+      .title {
+        font-size: 1.08rem;
+        font-weight: 800;
         letter-spacing: 0.01em;
       }
 
       .subtitle {
-        margin-top: 6px;
+        font-size: 0.76rem;
         color: var(--muted);
-        max-width: 760px;
-        line-height: 1.45;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
 
-      .toolbar,
-      .toolbar-2 {
+      .top-actions {
         display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
+        gap: 8px;
+        align-items: center;
       }
 
-      .toolbar-2 {
-        margin-top: 14px;
-      }
-
+      .icon-btn,
       .btn,
-      button {
-        appearance: none;
-        border: 1px solid var(--border);
-        background: var(--button-bg);
-        color: var(--text);
+      .tab-btn,
+      select,
+      input,
+      textarea {
         border-radius: 14px;
-        padding: 12px 14px;
+        border: 1px solid var(--border);
+      }
+
+      .icon-btn,
+      .btn,
+      .tab-btn {
+        min-height: 42px;
+        background: var(--panel-2);
+        color: var(--text);
         cursor: pointer;
-        min-height: 46px;
-        transition:
-          transform 0.12s ease,
-          background 0.2s ease,
-          border-color 0.2s ease,
-          box-shadow 0.2s ease;
+        padding: 10px 12px;
       }
 
-      .btn:hover,
-      button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+      .icon-btn {
+        min-width: 42px;
+        display: grid;
+        place-items: center;
       }
 
-      .btn.active,
-      button.active {
-        border-color: var(--accent);
-        box-shadow: inset 0 0 0 1px var(--accent);
+      .btn {
+        padding: 10px 14px;
       }
 
-      .btn-primary {
+      .btn.primary {
+        border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
         background: linear-gradient(
           180deg,
-          color-mix(in srgb, var(--accent) 28%, var(--button-bg)),
-          var(--button-bg)
+          color-mix(in srgb, var(--accent) 20%, var(--panel-2)),
+          var(--panel-2)
         );
       }
 
-      .btn-danger {
+      .btn.good {
+        border-color: color-mix(in srgb, var(--accent-2) 55%, var(--border));
+      }
+
+      .btn.danger {
         border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
       }
 
-      .btn-good {
-        border-color: color-mix(in srgb, var(--accent-2) 45%, var(--border));
-      }
-
-      .layout {
+      .compact-grid {
         display: grid;
-        grid-template-columns: 340px 1fr;
-        gap: 16px;
+        grid-template-columns: 1fr auto auto;
+        gap: 8px;
       }
 
-      @media (max-width: 1040px) {
-        .layout {
-          grid-template-columns: 1fr;
-        }
+      select,
+      input,
+      textarea {
+        width: 100%;
+        min-height: 42px;
+        background: var(--input);
+        color: var(--text);
+        padding: 10px 12px;
+        outline: none;
+      }
 
-        .sticky {
-          position: static;
-        }
+      textarea {
+        resize: none;
+        min-height: 88px;
+      }
+
+      .main {
+        overflow: hidden;
+        position: relative;
+      }
+
+      .screen {
+        position: absolute;
+        inset: 0;
+        overflow: auto;
+        padding: 12px;
+        display: none;
+      }
+
+      .screen.active {
+        display: block;
       }
 
       .stack {
         display: grid;
-        gap: 14px;
+        gap: 12px;
       }
 
       .card {
-        background: var(--card);
+        background: var(--panel);
         border: 1px solid var(--border);
         border-radius: var(--radius);
-        overflow: hidden;
         box-shadow: var(--shadow);
+        overflow: hidden;
       }
 
-      .card-header {
-        padding: 16px 18px;
+      .card-head {
+        padding: 12px 14px;
         border-bottom: 1px solid var(--border);
         background: rgba(255, 255, 255, 0.02);
       }
 
-      .card-body {
-        padding: 16px 18px;
+      .card-title {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 800;
       }
 
-      .card-header h2,
-      .card-header h3 {
-        margin: 0;
+      .card-sub {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 0.78rem;
+        line-height: 1.4;
+      }
+
+      .card-body {
+        padding: 12px 14px;
+      }
+
+      .mini-grid-2,
+      .mini-grid-3 {
+        display: grid;
+        gap: 8px;
+      }
+
+      .mini-grid-2 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .mini-grid-3 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .stat {
+        border: 1px solid var(--border);
+        background: var(--panel-2);
+        border-radius: 14px;
+        padding: 10px;
+      }
+
+      .stat-label {
+        color: var(--muted);
+        font-size: 0.72rem;
+      }
+
+      .stat-value {
+        margin-top: 4px;
+        font-size: 1.15rem;
+        font-weight: 800;
+      }
+
+      .good {
+        background: var(--good-bg);
+      }
+
+      .warn {
+        background: var(--warn-bg);
+      }
+
+      .bad {
+        background: var(--bad-bg);
+      }
+
+      .chips {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .chip {
+        font-size: 0.72rem;
+        color: var(--muted);
+        background: var(--chip);
+        border: 1px solid var(--border);
+        padding: 6px 10px;
+        border-radius: 999px;
+      }
+
+      .exercise-summary {
+        display: grid;
+        gap: 10px;
+      }
+
+      .exercise-name {
         font-size: 1rem;
+        font-weight: 800;
+        line-height: 1.3;
+      }
+
+      .exercise-cues {
+        color: var(--muted);
+        font-size: 0.8rem;
+        line-height: 1.45;
+      }
+
+      .sets-wrap {
+        display: grid;
+        gap: 8px;
+      }
+
+      .set-row {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--panel-2);
+        padding: 10px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .set-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .set-label {
+        font-size: 0.82rem;
+        font-weight: 800;
+      }
+
+      .set-controls {
+        display: grid;
+        grid-template-columns: 70px 78px 72px 1fr;
+        gap: 8px;
+      }
+
+      .done-btn {
+        min-height: 42px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--input);
+        color: var(--text);
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      .done-btn.active {
+        background: color-mix(in srgb, var(--accent-2) 22%, var(--input));
+        border-color: color-mix(
+          in srgb,
+          var(--accent-2) 50%,
+          var(--border)
+        );
+      }
+
+      .set-suggestion {
+        color: var(--muted);
+        font-size: 0.75rem;
+        line-height: 1.4;
+      }
+
+      .actions-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .timer-big {
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--border);
+        background: var(--panel-2);
+        border-radius: 20px;
+        padding: 16px;
+      }
+
+      .timer-value {
+        font-size: 2.1rem;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+      }
+
+      .timer-sub {
+        color: var(--muted);
+        font-size: 0.8rem;
+        margin-top: 4px;
+      }
+
+      .history-item {
+        border: 1px solid var(--border);
+        background: var(--panel-2);
+        border-radius: 14px;
+        padding: 10px;
+      }
+
+      .history-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .history-date {
+        font-size: 0.75rem;
+        color: var(--muted);
       }
 
       .muted {
         color: var(--muted);
       }
 
-      .small {
-        font-size: 0.88rem;
-      }
-
       .tiny {
-        font-size: 0.8rem;
+        font-size: 0.74rem;
       }
 
-      .mono {
-        font-family:
-          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-          "Liberation Mono", monospace;
-      }
-
-      .sticky {
-        position: sticky;
-        top: 14px;
-      }
-
-      .pill-row {
-        display: flex;
-        flex-wrap: wrap;
+      .bottom-tabs {
+        padding:
+          8px 10px calc(env(safe-area-inset-bottom, 0px) + 10px) 10px;
+        border-top: 1px solid var(--border);
+        background: rgba(8, 16, 31, 0.62);
+        backdrop-filter: blur(16px);
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
         gap: 8px;
       }
 
-      .pill {
-        border: 1px solid var(--border);
-        background: var(--bg-elev-2);
-        border-radius: 999px;
-        padding: 7px 10px;
-        color: var(--muted);
-        font-size: 0.86rem;
+      .light .bottom-tabs {
+        background: rgba(255, 255, 255, 0.76);
       }
 
-      .summary-grid {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 10px;
-      }
-
-      .summary-grid-3 {
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 10px;
-      }
-
-      @media (max-width: 640px) {
-        .summary-grid,
-        .summary-grid-3 {
-          grid-template-columns: 1fr;
-        }
-
-        .app {
-          padding: 10px;
-        }
-
-        .btn,
-        button {
-          width: 100%;
-        }
-
-        .toolbar,
-        .toolbar-2 {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-        }
-
-        .toolbar button,
-        .toolbar-2 button {
-          width: 100%;
-        }
-      }
-
-      .summary-box {
-        border: 1px solid var(--border);
-        background: var(--bg-elev-2);
-        border-radius: 14px;
-        padding: 12px;
-      }
-
-      .summary-box .label {
-        color: var(--muted);
-        font-size: 0.84rem;
-      }
-
-      .summary-box .value {
-        margin-top: 5px;
-        font-size: 1.22rem;
-        font-weight: 700;
-      }
-
-      .status-good {
-        background: var(--success-bg);
-      }
-
-      .status-warn {
-        background: var(--warn-bg);
-      }
-
-      .status-bad {
-        background: var(--danger-bg);
-      }
-
-      .section-title {
-        margin: 0 0 8px;
-        font-size: 0.96rem;
-        font-weight: 700;
-      }
-
-      .help-list {
-        margin: 0;
-        padding-left: 18px;
-        line-height: 1.5;
-        color: var(--muted);
-      }
-
-      .exercise {
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        overflow: hidden;
-        background: var(--bg-elev-2);
-      }
-
-      .exercise-header {
-        padding: 14px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-        align-items: flex-start;
-        justify-content: space-between;
-        border-bottom: 1px solid var(--border);
-      }
-
-      .exercise-title {
-        margin: 0;
-        font-size: 1rem;
-        font-weight: 700;
-      }
-
-      .exercise-body {
-        padding: 14px;
-        display: grid;
-        gap: 12px;
-      }
-
-      .exercise-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-
-      .cues {
-        color: var(--muted);
-        line-height: 1.45;
-      }
-
-      .table-wrap {
-        width: 100%;
-        overflow: auto;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-      }
-
-      table {
-        width: 100%;
-        min-width: 780px;
-        border-collapse: collapse;
-        background: transparent;
-      }
-
-      th,
-      td {
-        padding: 8px;
-        border-bottom: 1px solid var(--border);
-        text-align: left;
-        vertical-align: top;
-      }
-
-      th {
-        font-size: 0.82rem;
-        color: var(--muted);
-        font-weight: 600;
-        position: sticky;
-        top: 0;
-        background: color-mix(in srgb, var(--bg-elev-2) 88%, transparent);
-        backdrop-filter: blur(8px);
-      }
-
-      tr:last-child td {
-        border-bottom: none;
-      }
-
-      td input,
-      td select,
-      textarea,
-      .field {
-        width: 100%;
-        border: 1px solid var(--border);
-        background: var(--input-bg);
-        color: var(--text);
-        border-radius: 12px;
-        padding: 10px 12px;
-        min-height: 42px;
-      }
-
-      textarea {
-        resize: vertical;
-        min-height: 92px;
-      }
-
-      .done-wrap {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-      }
-
-      .done-wrap input[type="checkbox"] {
-        width: 22px;
-        height: 22px;
-      }
-
-      .row-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-      }
-
-      .grid-2 {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-      }
-
-      @media (max-width: 700px) {
-        .grid-2 {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      .timer {
-        display: grid;
-        gap: 10px;
-      }
-
-      .timer-ring {
+      .tab-btn {
+        min-height: 54px;
         display: grid;
         place-items: center;
-        width: 140px;
-        height: 140px;
-        border-radius: 999px;
-        border: 8px solid color-mix(in srgb, var(--accent) 45%, var(--border));
-        background:
-          radial-gradient(circle, transparent 58%, rgba(255, 255, 255, 0.03)),
-          var(--bg-elev-2);
-        margin: 0 auto;
+        font-size: 0.74rem;
+        text-align: center;
+        line-height: 1.1;
+        padding: 8px 4px;
       }
 
-      .timer-value {
-        font-size: 1.8rem;
-        font-weight: 800;
+      .tab-btn.active {
+        border-color: var(--accent);
+        box-shadow: inset 0 0 0 1px var(--accent);
       }
 
-      .history-list {
-        display: grid;
-        gap: 8px;
-      }
-
-      .history-item {
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        padding: 10px 12px;
-        background: var(--bg-elev-2);
-      }
-
-      .day-head {
+      .row {
         display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
+        gap: 8px;
         align-items: center;
+      }
+
+      .space {
         justify-content: space-between;
       }
 
       .hidden {
-        display: none;
+        display: none !important;
       }
 
-      .hr {
-        height: 1px;
-        background: var(--border);
-        margin: 2px 0;
+      @media (max-width: 390px) {
+        .set-controls {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .compact-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .mini-grid-3 {
+          grid-template-columns: 1fr;
+        }
+
+        .mini-grid-2 {
+          grid-template-columns: 1fr;
+        }
       }
 
-      .kpi {
-        font-size: 0.84rem;
-        color: var(--muted);
-      }
+      @media print {
+        body {
+          background: #fff;
+          color: #000;
+          overflow: visible;
+        }
 
-      .tag {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        border-radius: 999px;
-        padding: 6px 10px;
-        border: 1px solid var(--border);
-        background: var(--bg-elev-2);
-        color: var(--muted);
-        font-size: 0.82rem;
-      }
+        .app {
+          max-width: 100%;
+          height: auto;
+          display: block;
+        }
 
-      .footer-note {
-        color: var(--muted);
-        font-size: 0.83rem;
-        line-height: 1.5;
-      }
+        .topbar,
+        .bottom-tabs,
+        #timerScreen,
+        #settingsScreen,
+        #historyScreen {
+          display: none !important;
+        }
 
-      .nowrap {
-        white-space: nowrap;
+        .screen {
+          display: block !important;
+          position: static;
+          overflow: visible;
+          padding: 0;
+        }
+
+        .card {
+          box-shadow: none;
+          background: #fff;
+          border: 1px solid #ccc;
+        }
       }
     </style>
   </head>
   <body>
     <div class="app">
-      <div class="topbar">
-        <div class="hero">
-          <div class="hero-top">
-            <div>
-              <h1>Arm Hypertrophy App</h1>
-              <div class="subtitle">
-                Minimalist, science-based, single-file, and mildly obsessed with
-                getting your biceps and triceps bigger using exactly your
-                equipment: kettlebells 35/50/70 and dumbbells 25/35.
-              </div>
-            </div>
-
-            <div class="pill-row">
-              <div class="pill">Frequency: 2–3x/week</div>
-              <div class="pill">Reps: 6–20+</div>
-              <div class="pill">Effort: 0–3 RIR</div>
-              <div class="pill">ROM: full or nearly full</div>
+      <header class="topbar">
+        <div class="top-row">
+          <div class="brand">
+            <div class="title">Arm Hypertrophy</div>
+            <div class="subtitle">
+              Compact science-based arm training app
             </div>
           </div>
 
-          <div class="toolbar-2">
-            <button id="dayABtn" class="active btn-primary">Day A</button>
-            <button id="dayBBtn">Day B</button>
-            <button id="toggleGuideBtn">Hide Guide</button>
-            <button id="themeBtn">Light Mode</button>
-            <button id="printBtn">Print Workout Card</button>
-            <button id="resetWorkoutBtn">Reset Workout</button>
-            <button id="exportBtn">Export Data</button>
-            <button id="importBtn">Import Data</button>
-            <button id="clearAllBtn" class="btn-danger">Clear All Data</button>
-            <input
-              id="importFile"
-              type="file"
-              accept="application/json"
-              class="hidden"
-            />
+          <div class="top-actions">
+            <button id="themeBtn" class="icon-btn" aria-label="Toggle theme">
+              ◐
+            </button>
+            <button id="moreBtn" class="icon-btn" aria-label="More actions">
+              ⋯
+            </button>
           </div>
         </div>
-      </div>
 
-      <div class="layout">
-        <div class="stack sticky" id="guidePanel">
-          <div class="card">
-            <div class="card-header">
-              <h2>Guide + Science</h2>
-            </div>
-            <div class="card-body stack">
-              <div class="summary-grid">
-                <div class="summary-box">
-                  <div class="label">Weekly biceps target</div>
-                  <div class="value">14–18</div>
-                </div>
-                <div class="summary-box">
-                  <div class="label">Weekly triceps target</div>
-                  <div class="value">14–16</div>
-                </div>
+        <div class="compact-grid">
+          <select id="daySelect" aria-label="Select training day"></select>
+          <select id="exerciseSelect" aria-label="Select exercise"></select>
+          <button id="jumpToExerciseBtn" class="btn">Go</button>
+        </div>
+      </header>
+
+      <main class="main">
+        <section id="dashboardScreen" class="screen active">
+          <div class="stack">
+            <div class="card">
+              <div class="card-head">
+                <h2 class="card-title">Today</h2>
+                <div class="card-sub" id="dashboardDayDescription"></div>
               </div>
-
-              <div>
-                <div class="section-title">Principles used</div>
-                <ul class="help-list">
-                  <li>
-                    Broad rep ranges can build muscle when sets are close enough
-                    to failure.
-                  </li>
-                  <li>
-                    Around 10+ weekly hard sets per muscle is a strong general
-                    target.
-                  </li>
-                  <li>
-                    Full ROM and loaded lengthened positions are often useful.
-                  </li>
-                  <li>
-                    Overhead triceps work biases the long head.
-                  </li>
-                  <li>
-                    Supinated, neutral, and pronated curls cover the elbow
-                    flexors more completely.
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <div class="section-title">Progression ladder</div>
-                <ol class="help-list">
-                  <li>Add reps</li>
-                  <li>Improve ROM and control</li>
-                  <li>Slow the eccentric to 3–5 sec</li>
-                  <li>Add a stretch pause</li>
-                  <li>Add a set</li>
-                  <li>Use myo-reps or rest-pause</li>
-                  <li>Move to a heavier implement if reps allow</li>
-                </ol>
-              </div>
-
-              <div>
-                <div class="section-title">Warm-up</div>
-                <ul class="help-list">
-                  <li>2–3 min general movement</li>
-                  <li>Arm circles and easy elbow/wrist prep</li>
-                  <li>1–2 ramp-up sets for first curl and first triceps move</li>
-                </ul>
-              </div>
-
-              <div>
-                <div class="section-title">Rest times</div>
-                <ul class="help-list">
-                  <li>Heavy movements: 2–3 min</li>
-                  <li>Isolation work: 60–90 sec</li>
-                  <li>Rest-pause mini-rests: 20–30 sec</li>
-                </ul>
-              </div>
-
-              <div class="footer-note">
-                If your weights feel too light, use unilateral work, longer
-                eccentrics, pauses in the stretch, and rest-pause sets. Fancy
-                suffering, scientifically arranged.
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-header">
-              <h3>Weekly Volume</h3>
-            </div>
-            <div class="card-body stack">
-              <div class="summary-grid">
-                <div
-                  class="summary-box"
-                  id="bicepsWeeklyBox"
-                >
-                  <div class="label">Completed biceps sets</div>
-                  <div class="value" id="bicepsCompleted">0</div>
-                </div>
-                <div
-                  class="summary-box"
-                  id="tricepsWeeklyBox"
-                >
-                  <div class="label">Completed triceps sets</div>
-                  <div class="value" id="tricepsCompleted">0</div>
-                </div>
-              </div>
-
-              <div class="summary-grid-3">
-                <div class="summary-box">
-                  <div class="label">Current Day planned</div>
-                  <div class="value" id="plannedToday">0</div>
-                </div>
-                <div class="summary-box">
-                  <div class="label">Current Day checked</div>
-                  <div class="value" id="checkedToday">0</div>
-                </div>
-                <div class="summary-box">
-                  <div class="label">Session quality</div>
-                  <div class="value" id="qualityToday">—</div>
-                </div>
-              </div>
-
-              <div class="footer-note">
-                Quality score is based on completion plus whether your logged RIR
-                usually lands in the recommended 0–3 range.
-              </div>
-
-              <div class="row-actions">
-                <button id="resetWeeklyBtn">Reset Weekly Counters</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-header">
-              <h3>Rest Timer</h3>
-            </div>
-            <div class="card-body timer">
-              <div class="timer-ring">
-                <div>
-                  <div class="timer-value" id="timerValue">00:00</div>
-                  <div class="tiny muted" style="text-align: center;">
-                    Rest less than your effort, not more than your patience
+              <div class="card-body">
+                <div class="mini-grid-3">
+                  <div class="stat">
+                    <div class="stat-label">Day</div>
+                    <div class="stat-value" id="dashDayName">A</div>
                   </div>
-                </div>
-              </div>
-
-              <div class="grid-2">
-                <button data-timer="30" class="timer-preset">30 sec</button>
-                <button data-timer="60" class="timer-preset">60 sec</button>
-                <button data-timer="90" class="timer-preset">90 sec</button>
-                <button data-timer="120" class="timer-preset">2 min</button>
-                <button data-timer="180" class="timer-preset">3 min</button>
-                <button id="timerStartCustom">Start Custom</button>
-              </div>
-
-              <div class="grid-2">
-                <input
-                  id="customTimerInput"
-                  class="field"
-                  type="number"
-                  min="5"
-                  step="5"
-                  value="75"
-                  placeholder="Seconds"
-                />
-                <div class="row-actions">
-                  <button id="timerPauseBtn">Pause</button>
-                  <button id="timerResetBtn">Reset</button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card">
-            <div class="card-header">
-              <h3>Session History</h3>
-            </div>
-            <div class="card-body">
-              <div id="historyList" class="history-list"></div>
-            </div>
-          </div>
-        </div>
-
-        <div class="stack">
-          <div class="card">
-            <div class="card-header">
-              <div class="day-head">
-                <h2 id="dayTitle">Day A</h2>
-                <div class="pill-row">
-                  <div class="pill">Equipment: KB 35/50/70</div>
-                  <div class="pill">Equipment: DB 25/35</div>
-                </div>
-              </div>
-            </div>
-            <div class="card-body stack">
-              <div class="muted" id="dayDescription"></div>
-
-              <div class="summary-grid-3">
-                <div class="summary-box">
-                  <div class="label">Planned biceps sets</div>
-                  <div class="value" id="plannedBicepsSets">0</div>
-                </div>
-                <div class="summary-box">
-                  <div class="label">Planned triceps sets</div>
-                  <div class="value" id="plannedTricepsSets">0</div>
-                </div>
-                <div class="summary-box">
-                  <div class="label">Best next progression</div>
-                  <div class="value small" id="globalSuggestion">
-                    Log a set to get suggestions.
+                  <div class="stat">
+                    <div class="stat-label">Planned sets</div>
+                    <div class="stat-value" id="dashPlannedSets">0</div>
+                  </div>
+                  <div class="stat">
+                    <div class="stat-label">Checked</div>
+                    <div class="stat-value" id="dashCheckedSets">0</div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div id="exerciseContainer" class="stack"></div>
-
-          <div class="card">
-            <div class="card-header">
-              <h3>Session Notes</h3>
-            </div>
-            <div class="card-body stack">
-              <textarea
-                id="sessionNotes"
-                placeholder="How did the session feel? PRs, elbow notes, what to change next time..."
-              ></textarea>
-
-              <div class="row-actions">
-                <button id="saveNotesBtn">Save Notes</button>
-                <button id="markSessionCompleteBtn" class="btn-good">
-                  Mark Session Complete
-                </button>
+            <div class="card">
+              <div class="card-head">
+                <h2 class="card-title">Weekly Volume</h2>
+                <div class="card-sub">
+                  Aim roughly 10–18 hard sets per muscle per week.
+                </div>
               </div>
-
-              <div class="footer-note">
-                Session completion adds checked sets to weekly totals and stores
-                a history entry. Hit it once per actual session, not like you are
-                farming XP in a mobile game.
+              <div class="card-body">
+                <div class="mini-grid-2">
+                  <div id="weeklyBicepsCard" class="stat">
+                    <div class="stat-label">Biceps</div>
+                    <div class="stat-value" id="weeklyBiceps">0</div>
+                  </div>
+                  <div id="weeklyTricepsCard" class="stat">
+                    <div class="stat-label">Triceps</div>
+                    <div class="stat-value" id="weeklyTriceps">0</div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="card">
-            <div class="card-header">
-              <h3>Printable Workout Card Preview</h3>
+            <div class="card">
+              <div class="card-head">
+                <h2 class="card-title">Science Cues</h2>
+              </div>
+              <div class="card-body">
+                <div class="chips">
+                  <div class="chip">0–3 RIR</div>
+                  <div class="chip">6–20+ reps</div>
+                  <div class="chip">Full ROM</div>
+                  <div class="chip">Close to failure</div>
+                  <div class="chip">Overhead triceps work</div>
+                  <div class="chip">Supinated + neutral + pronated curls</div>
+                </div>
+              </div>
             </div>
-            <div class="card-body">
-              <div id="printPreview" class="footer-note"></div>
+
+            <div class="card">
+              <div class="card-head">
+                <h2 class="card-title">Best Next Progression</h2>
+              </div>
+              <div class="card-body">
+                <div id="globalSuggestion" class="exercise-cues">
+                  Log a set to get progression suggestions.
+                </div>
+              </div>
+            </div>
+
+            <div class="actions-row">
+              <button id="quickCompleteBtn" class="btn good">
+                Mark Session Complete
+              </button>
+              <button id="quickPrintBtn" class="btn">Print</button>
             </div>
           </div>
-        </div>
-      </div>
+        </section>
+
+        <section id="workoutScreen" class="screen">
+          <div class="stack">
+            <div class="card">
+              <div class="card-head">
+                <h2 class="card-title">Workout</h2>
+                <div class="card-sub">
+                  Pick an exercise from the dropdown to avoid all the doom-scroll.
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="exercise-summary">
+                  <div class="exercise-name" id="exerciseName"></div>
+                  <div class="chips" id="exerciseMeta"></div>
+                  <div class="exercise-cues" id="exerciseCues"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <h2 class="card-title">Sets</h2>
+                <div class="card-sub">
+                  Use dropdowns for weight and RIR. Fewer taps, less chaos.
+                </div>
+              </div>
+              <div class="card-body">
+                <div id="setsWrap" class="sets-wrap"></div>
+              </div>
+            </div>
+
+            <div class="actions-row">
+              <button id="markAllDoneBtn" class="btn">Mark All Done</button>
+              <button id="clearExerciseBtn" class="btn">Clear Exercise</button>
+              <select id="exerciseQuickAction" aria-label="Exercise quick action">
+                <option value="">More actions</option>
+                <option value="rest">Start suggested rest</option>
+                <option value="next">Next exercise</option>
+                <option value="prev">Previous exercise</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section id="timerScreen" class="screen">
+          <div class="stack">
+            <div class="card">
+              <div class="card-head">
+                <h2 class="card-title">Rest Timer</h2>
+                <div class="card-sub">
+                  For when your muscles are cooked but your soul is still buffering.
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="timer-big">
+                  <div id="timerValue" class="timer-value">00:00</div>
+                  <div class="timer-sub">Suggested rests built into exercises</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <h2 class="card-title">Start Timer</h2>
+              </div>
+              <div class="card-body">
+                <div class="mini-grid-2">
+                  <select id="timerPresetSelect" aria-label="Timer preset">
+                    <option value="30">30 sec</option>
+                    <option value="60">60 sec</option>
+                    <option value="75" selected>75 sec</option>
+                    <option value="90">90 sec</option>
+                    <option value="120">2 min</option>
+                    <option value="150">2.5 min</option>
+                    <option value="180">3 min</option>
+                  </select>
+                  <input
+                    id="customTimerInput"
+                    type="number"
+                    min="5"
+                    step="5"
+                    value="75"
+                    placeholder="Custom seconds"
+                  />
+                </div>
+
+                <div class="actions-row" style="margin-top: 10px;">
+                  <button id="startPresetTimerBtn" class="btn primary">
+                    Start Preset
+                  </button>
+                  <button id="startCustomTimerBtn" class="btn">
+                    Start Custom
+                  </button>
+                  <button id="pauseTimerBtn" class="btn">Pause</button>
+                  <button id="resetTimerBtn" class="btn">Reset</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="historyScreen" class="screen">
+          <div class="stack">
+            <div class="card">
+              <div class="card-head">
+                <h2 class="card-title">History</h2>
+                <div class="card-sub">
+                  Completed sessions and notes.
+                </div>
+              </div>
+              <div class="card-body">
+                <div id="historyList" class="stack"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="settingsScreen" class="screen">
+          <div class="stack">
+            <div class="card">
+              <div class="card-head">
+                <h2 class="card-title">Session Notes</h2>
+              </div>
+              <div class="card-body">
+                <textarea
+                  id="sessionNotes"
+                  placeholder="PRs, elbow notes, what to change next time..."
+                ></textarea>
+                <div class="actions-row" style="margin-top: 10px;">
+                  <button id="saveNotesBtn" class="btn">Save Notes</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <h2 class="card-title">App Actions</h2>
+              </div>
+              <div class="card-body">
+                <div class="stack">
+                  <select id="settingsActionSelect" aria-label="Settings action">
+                    <option value="">Choose action</option>
+                    <option value="complete">Mark session complete</option>
+                    <option value="reset-workout">Reset current day workout</option>
+                    <option value="reset-weekly">Reset weekly counters</option>
+                    <option value="export">Export data</option>
+                    <option value="import">Import data</option>
+                    <option value="print">Print workout card</option>
+                    <option value="clear-all">Clear all data</option>
+                  </select>
+
+                  <button id="runSettingsActionBtn" class="btn primary">
+                    Run Action
+                  </button>
+
+                  <input
+                    id="importFile"
+                    type="file"
+                    accept="application/json"
+                    class="hidden"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-head">
+                <h2 class="card-title">Program Rules</h2>
+              </div>
+              <div class="card-body">
+                <div class="exercise-cues">
+                  - Train arms 2–3 times per week
+                  <br />
+                  - Work mostly in 6–20 reps
+                  <br />
+                  - Stay around 0–3 RIR on most hard sets
+                  <br />
+                  - Progress by adding reps, improving control, slowing eccentrics,
+                  adding pauses, then increasing difficulty
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <nav class="bottom-tabs">
+        <button class="tab-btn active" data-screen="dashboardScreen">
+          Dashboard
+        </button>
+        <button class="tab-btn" data-screen="workoutScreen">Workout</button>
+        <button class="tab-btn" data-screen="timerScreen">Timer</button>
+        <button class="tab-btn" data-screen="historyScreen">History</button>
+        <button class="tab-btn" data-screen="settingsScreen">Settings</button>
+      </nav>
     </div>
 
     <script>
@@ -862,6 +873,7 @@
               rest: "2–3 min",
               restSeconds: 150,
               load: "35 lb kettlebell",
+              weightOptions: ["KB 35", "KB 50", "KB 70", "Other"],
               cues:
                 "Keep upper arm mostly fixed. Let the elbow bend fully for a stretch. Lower for 3 seconds, brief stretch, then strong lockout. Don’t turn it into a pullover.",
             },
@@ -874,6 +886,7 @@
               rest: "2 min",
               restSeconds: 120,
               load: "25s or 35s",
+              weightOptions: ["DB 25s", "DB 35s", "Other"],
               cues:
                 "Lower under control until triceps lightly meet the floor. Keep shoulders quiet. If elbows complain, use a neutral grip.",
             },
@@ -886,6 +899,7 @@
               rest: "2 min",
               restSeconds: 120,
               load: "25s or 35s",
+              weightOptions: ["DB 25s", "DB 35s", "Other"],
               cues:
                 "Start neutral if needed and finish fully supinated. Fully straighten the elbow if pain-free. Rotate pinky up and out at the top. Avoid swinging.",
             },
@@ -898,8 +912,9 @@
               rest: "60–90 sec",
               restSeconds: 75,
               load: "25 or 35 lb dumbbell",
+              weightOptions: ["DB 25", "DB 35", "KB 35", "Other"],
               cues:
-                "Keep the wrist neutral. Pull across the body with control. Great for brachialis and brachioradialis.",
+                "Keep wrist neutral. Pull across the body with control. Great for brachialis and brachioradialis.",
             },
             {
               id: "a5",
@@ -910,8 +925,9 @@
               rest: "60–90 sec",
               restSeconds: 75,
               load: "25 lb dumbbells",
+              weightOptions: ["DB 25s", "DB 35s", "Other"],
               cues:
-                "Use a pronated grip. Slow lowering. Expect fewer reps and more forearm burn. That is not your body betraying you; that is the exercise working.",
+                "Use a pronated grip. Slow lowering. Expect fewer reps and more forearm burn.",
             },
             {
               id: "a6",
@@ -922,6 +938,7 @@
               rest: "Minimal transition",
               restSeconds: 15,
               load: "35 lb KB then 25s DB",
+              weightOptions: ["KB 35 + DB 25s", "Other"],
               cues:
                 "Do overhead extension to near failure, then immediately switch to floor press-style close-grip dumbbell extension to near failure.",
               optional: true,
@@ -942,6 +959,7 @@
               rest: "2 min",
               restSeconds: 120,
               load: "35s if possible",
+              weightOptions: ["DB 25s", "DB 35s", "Other"],
               cues:
                 "Keep elbows somewhat tucked. Pause briefly on the floor each rep. Use it as a triceps-biased compound.",
             },
@@ -954,6 +972,7 @@
               rest: "60–90 sec",
               restSeconds: 75,
               load: "25 lb dumbbell",
+              weightOptions: ["DB 25", "DB 35", "Other"],
               cues:
                 "Be strict. Pause in full extension. Great complement to overhead work because it loads the shortened position.",
             },
@@ -966,6 +985,7 @@
               rest: "60–90 sec",
               restSeconds: 75,
               load: "25 lb dumbbell",
+              weightOptions: ["DB 25", "DB 35", "Other"],
               cues:
                 "Lean slightly forward and let the arm drift a bit behind the torso at the bottom. Slow eccentric, full elbow extension.",
             },
@@ -978,6 +998,7 @@
               rest: "60–90 sec",
               restSeconds: 75,
               load: "25 or 35 lb dumbbell",
+              weightOptions: ["DB 25", "DB 35", "Other"],
               cues:
                 "Stay stable. Full stretch at the bottom and a hard squeeze at the top. Easy to take close to failure safely.",
             },
@@ -990,6 +1011,7 @@
               rest: "20–30 sec mini-rests",
               restSeconds: 25,
               load: "25s or 35s",
+              weightOptions: ["DB 25s", "DB 35s", "Other"],
               cues:
                 "Use one hard set followed by mini-sets. Very useful when load options are limited.",
             },
@@ -997,10 +1019,12 @@
         },
       };
 
-      const STORAGE_KEY = "arm-hypertrophy-app-v2";
+      const STORAGE_KEY = "arm-hypertrophy-mobile-v1";
 
       const defaultState = {
         currentDay: "dayA",
+        currentExerciseIndex: 0,
+        currentScreen: "dashboardScreen",
         theme: "dark",
         weeklyCompleted: {
           biceps: 0,
@@ -1023,18 +1047,18 @@
       let state = loadState();
       let timerInterval = null;
 
-      function deepClone(obj) {
+      function clone(obj) {
         return JSON.parse(JSON.stringify(obj));
       }
 
       function loadState() {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return deepClone(defaultState);
+        if (!raw) return clone(defaultState);
 
         try {
           const parsed = JSON.parse(raw);
           return {
-            ...deepClone(defaultState),
+            ...clone(defaultState),
             ...parsed,
             weeklyCompleted: {
               ...defaultState.weeklyCompleted,
@@ -1052,7 +1076,7 @@
             },
           };
         } catch {
-          return deepClone(defaultState);
+          return clone(defaultState);
         }
       }
 
@@ -1060,8 +1084,13 @@
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       }
 
-      function getDayData() {
+      function getDay() {
         return PROGRAM[state.currentDay];
+      }
+
+      function getExercise() {
+        const day = getDay();
+        return day.exercises[state.currentExerciseIndex] || day.exercises[0];
       }
 
       function getEntry(exerciseId, setIndex) {
@@ -1082,82 +1111,53 @@
         const entry = getEntry(exerciseId, setIndex);
         entry[field] = value;
         saveState();
-        renderStats();
+        renderAll();
       }
 
-      function el(tag, attrs = {}, children = []) {
-        const node = document.createElement(tag);
-
-        Object.entries(attrs).forEach(([k, v]) => {
-          if (k === "className") node.className = v;
-          else if (k === "text") node.textContent = v;
-          else if (k === "html") node.innerHTML = v;
-          else node.setAttribute(k, v);
-        });
-
-        children.forEach((child) => {
-          if (child == null) return;
-          if (typeof child === "string") {
-            node.appendChild(document.createTextNode(child));
-          } else {
-            node.appendChild(child);
-          }
-        });
-
-        return node;
+      function parseNum(v) {
+        const n = Number(String(v).trim());
+        return Number.isFinite(n) ? n : null;
       }
 
-      function formatSeconds(total) {
-        const safe = Math.max(0, Math.floor(total));
-        const mins = String(Math.floor(safe / 60)).padStart(2, "0");
-        const secs = String(safe % 60).padStart(2, "0");
-        return `${mins}:${secs}`;
-      }
-
-      function parseRepRange(repText) {
-        const normalized = repText.replace(/–/g, "-");
-        const match = normalized.match(/(\d+)\s*-\s*(\d+)/);
+      function parseRange(text) {
+        const norm = text.replace(/–/g, "-");
+        const match = norm.match(/(\d+)\s*-\s*(\d+)/);
         if (match) {
           return {
             low: Number(match[1]),
             high: Number(match[2]),
           };
         }
-
-        const single = normalized.match(/(\d+)/);
+        const single = norm.match(/(\d+)/);
         if (single) {
           const n = Number(single[1]);
           return { low: n, high: n };
         }
-
         return null;
-      }
-
-      function parseNumeric(input) {
-        const n = Number(String(input).trim());
-        return Number.isFinite(n) ? n : null;
       }
 
       function getPlannedSets(dayKey) {
         const day = PROGRAM[dayKey];
+        let total = 0;
         let biceps = 0;
         let triceps = 0;
 
         day.exercises.forEach((ex) => {
+          total += ex.sets;
           if (ex.muscle === "biceps") biceps += ex.sets;
           if (ex.muscle === "triceps") triceps += ex.sets;
         });
 
-        return { biceps, triceps, total: biceps + triceps };
+        return { total, biceps, triceps };
       }
 
-      function getCheckedStats(dayKey) {
+      function getCheckedSets(dayKey) {
         const day = PROGRAM[dayKey];
+        let total = 0;
         let biceps = 0;
         let triceps = 0;
-        let total = 0;
-        let rirCount = 0;
-        let goodRirCount = 0;
+        let goodRir = 0;
+        let totalRir = 0;
 
         day.exercises.forEach((ex) => {
           for (let i = 1; i <= ex.sets; i += 1) {
@@ -1168,343 +1168,321 @@
               if (ex.muscle === "biceps") biceps += 1;
               if (ex.muscle === "triceps") triceps += 1;
 
-              const rirNum = parseNumeric(entry.rir);
-              if (rirNum !== null) {
-                rirCount += 1;
-                if (rirNum >= 0 && rirNum <= 3) goodRirCount += 1;
+              const rir = parseNum(entry.rir);
+              if (rir !== null) {
+                totalRir += 1;
+                if (rir >= 0 && rir <= 3) goodRir += 1;
               }
             }
           }
         });
 
-        return {
-          biceps,
-          triceps,
-          total,
-          rirCount,
-          goodRirCount,
-        };
+        return { total, biceps, triceps, goodRir, totalRir };
       }
 
-      function getSessionQuality(dayKey) {
-        const planned = getPlannedSets(dayKey);
-        const checked = getCheckedStats(dayKey);
-        const completionRatio = planned.total
-          ? checked.total / planned.total
-          : 0;
-        const rirRatio = checked.rirCount
-          ? checked.goodRirCount / checked.rirCount
-          : 0.5;
-        const score = completionRatio * 0.65 + rirRatio * 0.35;
-
-        if (score >= 0.85) return "Strong";
-        if (score >= 0.6) return "Solid";
-        if (score > 0) return "Partial";
-        return "—";
+      function getVolumeClass(n) {
+        if (n >= 10 && n <= 18) return "good";
+        if (n < 10) return "warn";
+        return "bad";
       }
 
-      function getWeeklyStatusClass(count) {
-        if (count >= 10 && count <= 18) return "status-good";
-        if (count < 10) return "status-warn";
-        return "status-bad";
-      }
-
-      function getSuggestionForSet(exercise, entry) {
-        if (!entry) return "Log this set to get progression suggestions.";
-
-        const repsLogged = parseNumeric(entry.reps);
-        const rirLogged = parseNumeric(entry.rir);
-        const range = parseRepRange(exercise.reps);
-
-        if (entry.done !== true) {
-          return "Check the set as done when completed.";
+      function getSuggestion(exercise, entry) {
+        if (!entry || !entry.done) {
+          return "Complete and log this set to get a progression suggestion.";
         }
 
-        if (repsLogged === null || rirLogged === null || !range) {
+        const reps = parseNum(entry.reps);
+        const rir = parseNum(entry.rir);
+        const range = parseRange(exercise.reps);
+
+        if (reps === null || rir === null || !range) {
           return "Add reps and RIR for more precise progression guidance.";
         }
 
-        if (rirLogged > 3) {
-          return "Too far from failure. Next time push harder or extend the set.";
+        if (rir > 3) {
+          return "Too easy. Next time push closer to failure or extend the set.";
         }
 
-        if (repsLogged >= range.high && rirLogged <= 2) {
-          return "Top of range achieved. Next step: use a harder variation, slower eccentric, pause in the stretch, or heavier load if possible.";
+        if (reps >= range.high && rir <= 2) {
+          return "Top of range achieved. Next time use slower eccentrics, a pause, a harder variation, or heavier load if possible.";
         }
 
-        if (repsLogged < range.low && rirLogged <= 1) {
-          return "Below target reps. Keep the same load and try to add reps next session.";
+        if (reps < range.low && rir <= 1) {
+          return "Below target reps but effort is high. Keep load stable and add reps next session.";
         }
 
-        if (repsLogged >= range.low && repsLogged < range.high && rirLogged <= 3) {
-          return "Good working set. Progress by adding 1–2 reps next time.";
+        if (reps >= range.low && reps < range.high && rir <= 3) {
+          return "Good set. Progress by adding 1–2 reps next time.";
         }
 
-        if (rirLogged >= 2 && repsLogged < range.high) {
-          return "Likely room to work harder. Aim for more reps or lower RIR next time.";
-        }
-
-        return "Keep load stable and improve ROM, control, or eccentric tempo.";
+        return "Keep load stable and improve control, ROM, or tempo.";
       }
 
-      function getGlobalSuggestion(dayKey) {
-        const day = PROGRAM[dayKey];
+      function getGlobalSuggestion() {
+        const day = getDay();
 
         for (const ex of day.exercises) {
           for (let i = 1; i <= ex.sets; i += 1) {
-            const key = `${dayKey}:${ex.id}:${i}`;
+            const key = `${state.currentDay}:${ex.id}:${i}`;
             const entry = state.entries[key];
             if (entry && entry.done) {
-              return getSuggestionForSet(ex, entry);
+              return getSuggestion(ex, entry);
             }
           }
         }
 
-        return "Start logging sets. Most useful progression order: add reps, improve control, then increase difficulty.";
+        return "Best progression order: add reps, improve control, slow the eccentric, add a stretch pause, then increase difficulty.";
       }
 
-      function createSetRow(exercise, setIndex) {
-        const entry = getEntry(exercise.id, setIndex);
-
-        const doneInput = el("input", { type: "checkbox" });
-        doneInput.checked = !!entry.done;
-        doneInput.addEventListener("change", (e) => {
-          setEntry(exercise.id, setIndex, "done", e.target.checked);
-        });
-
-        const weightInput = el("input", {
-          type: "text",
-          value: entry.weight,
-          placeholder: "25s / 35 / KB 35",
-        });
-        weightInput.addEventListener("input", (e) => {
-          setEntry(exercise.id, setIndex, "weight", e.target.value);
-        });
-
-        const repsInput = el("input", {
-          type: "text",
-          value: entry.reps,
-          placeholder: "12",
-        });
-        repsInput.addEventListener("input", (e) => {
-          setEntry(exercise.id, setIndex, "reps", e.target.value);
-        });
-
-        const rirInput = el("input", {
-          type: "text",
-          value: entry.rir,
-          placeholder: "0–3",
-        });
-        rirInput.addEventListener("input", (e) => {
-          setEntry(exercise.id, setIndex, "rir", e.target.value);
-        });
-
-        const notesInput = el("input", {
-          type: "text",
-          value: entry.notes,
-          placeholder: "tempo, pain, PR, etc.",
-        });
-        notesInput.addEventListener("input", (e) => {
-          setEntry(exercise.id, setIndex, "notes", e.target.value);
-        });
-
-        const timerBtn = el("button", { type: "button" }, ["Rest"]);
-        timerBtn.addEventListener("click", () => startTimer(exercise.restSeconds));
-
-        const suggestion = el("div", {
-          className: "tiny muted",
-          text: getSuggestionForSet(exercise, entry),
-        });
-
-        const row = el("tr", {}, [
-          el("td", { className: "mono", text: String(setIndex) }),
-          el("td", { className: "done-wrap" }, [doneInput]),
-          el("td", {}, [weightInput]),
-          el("td", {}, [repsInput]),
-          el("td", {}, [rirInput]),
-          el("td", {}, [notesInput]),
-          el("td", {}, [timerBtn]),
-        ]);
-
-        return { row, suggestion };
+      function applyTheme() {
+        document.body.classList.toggle("light", state.theme === "light");
       }
 
-      function renderDay() {
-        const day = getDayData();
+      function switchScreen(screenId) {
+        state.currentScreen = screenId;
+        saveState();
 
-        document.getElementById("dayTitle").textContent = day.title;
-        document.getElementById("dayDescription").textContent = day.description;
+        document.querySelectorAll(".screen").forEach((s) => {
+          s.classList.toggle("active", s.id === screenId);
+        });
 
-        document
-          .getElementById("dayABtn")
-          .classList.toggle("active", state.currentDay === "dayA");
-        document
-          .getElementById("dayBBtn")
-          .classList.toggle("active", state.currentDay === "dayB");
+        document.querySelectorAll(".tab-btn").forEach((b) => {
+          b.classList.toggle("active", b.dataset.screen === screenId);
+        });
+      }
 
-        document.getElementById("sessionNotes").value =
-          state.sessionNotes[state.currentDay] || "";
+      function populateDaySelect() {
+        const select = document.getElementById("daySelect");
+        select.innerHTML = `
+          <option value="dayA">Day A</option>
+          <option value="dayB">Day B</option>
+        `;
+        select.value = state.currentDay;
+      }
 
+      function populateExerciseSelect() {
+        const select = document.getElementById("exerciseSelect");
+        const day = getDay();
+
+        select.innerHTML = day.exercises
+          .map((ex, i) => {
+            return `<option value="${i}">${ex.name}</option>`;
+          })
+          .join("");
+
+        select.value = String(state.currentExerciseIndex);
+      }
+
+      function renderDashboard() {
+        const day = getDay();
         const planned = getPlannedSets(state.currentDay);
-        document.getElementById("plannedBicepsSets").textContent = planned.biceps;
-        document.getElementById("plannedTricepsSets").textContent =
-          planned.triceps;
-        document.getElementById("globalSuggestion").textContent =
-          getGlobalSuggestion(state.currentDay);
+        const checked = getCheckedSets(state.currentDay);
 
-        const preview = [];
-        preview.push(`${day.title}`);
-        preview.push(day.description);
-        preview.push("");
+        document.getElementById("dashDayName").textContent =
+          day.title.replace("Day ", "");
+        document.getElementById("dashPlannedSets").textContent = planned.total;
+        document.getElementById("dashCheckedSets").textContent = checked.total;
+        document.getElementById("dashboardDayDescription").textContent =
+          day.description;
 
-        const container = document.getElementById("exerciseContainer");
-        container.innerHTML = "";
-
-        day.exercises.forEach((exercise) => {
-          preview.push(
-            `${exercise.name} — ${exercise.sets} sets — ${exercise.reps} — Rest ${exercise.rest} — Load ${exercise.load}`
-          );
-
-          const card = el("div", { className: "exercise" });
-
-          const header = el("div", { className: "exercise-header" }, [
-            el("div", {}, [
-              el("div", { className: "exercise-title", text: exercise.name }),
-              exercise.optional
-                ? el("div", {
-                    className: "small muted",
-                    text: "Optional finisher",
-                  })
-                : null,
-            ]),
-            el("div", { className: "exercise-meta" }, [
-              el("div", { className: "pill", text: `${exercise.sets} sets` }),
-              el("div", { className: "pill", text: `Reps: ${exercise.reps}` }),
-              el("div", { className: "pill", text: `Rest: ${exercise.rest}` }),
-              el("div", { className: "pill", text: `Load: ${exercise.load}` }),
-              el("div", {
-                className: "pill",
-                text:
-                  exercise.muscle === "biceps" ? "Biceps focus" : "Triceps focus",
-              }),
-            ]),
-          ]);
-
-          const body = el("div", { className: "exercise-body" }, [
-            el("div", { className: "cues small" }, [
-              el("strong", { text: "Cues: " }),
-              document.createTextNode(exercise.cues),
-            ]),
-          ]);
-
-          const tableWrap = el("div", { className: "table-wrap" });
-          const table = el("table");
-          const thead = el("thead");
-          thead.appendChild(
-            el("tr", {}, [
-              el("th", { text: "Set" }),
-              el("th", { text: "Done" }),
-              el("th", { text: "Weight" }),
-              el("th", { text: "Reps" }),
-              el("th", { text: "RIR" }),
-              el("th", { text: "Notes" }),
-              el("th", { text: "Timer" }),
-            ])
-          );
-
-          const tbody = el("tbody");
-          const suggestionList = el("div", { className: "stack" });
-
-          for (let i = 1; i <= exercise.sets; i += 1) {
-            const { row, suggestion } = createSetRow(exercise, i);
-            tbody.appendChild(row);
-            suggestionList.appendChild(
-              el("div", { className: "tag" }, [
-                el("span", { className: "mono", text: `Set ${i}` }),
-                suggestion,
-              ])
-            );
-          }
-
-          table.appendChild(thead);
-          table.appendChild(tbody);
-          tableWrap.appendChild(table);
-          body.appendChild(tableWrap);
-
-          body.appendChild(
-            el("div", {}, [
-              el("div", { className: "section-title", text: "Set Suggestions" }),
-              suggestionList,
-            ])
-          );
-
-          const actions = el("div", { className: "row-actions" }, [
-            el("button", { type: "button" }, ["Mark all sets done"]),
-            el("button", { type: "button" }, ["Clear exercise"]),
-            el("button", { type: "button" }, ["Start suggested rest"]),
-          ]);
-
-          actions.children[0].addEventListener("click", () => {
-            for (let i = 1; i <= exercise.sets; i += 1) {
-              setEntry(exercise.id, i, "done", true);
-            }
-            renderDay();
-          });
-
-          actions.children[1].addEventListener("click", () => {
-            for (let i = 1; i <= exercise.sets; i += 1) {
-              const key = `${state.currentDay}:${exercise.id}:${i}`;
-              state.entries[key] = {
-                done: false,
-                weight: "",
-                reps: "",
-                rir: "",
-                notes: "",
-              };
-            }
-            saveState();
-            renderDay();
-            renderStats();
-          });
-
-          actions.children[2].addEventListener("click", () => {
-            startTimer(exercise.restSeconds);
-          });
-
-          body.appendChild(actions);
-
-          card.appendChild(header);
-          card.appendChild(body);
-          container.appendChild(card);
-        });
-
-        document.getElementById("printPreview").textContent = preview.join("\n");
-      }
-
-      function renderStats() {
-        const checked = getCheckedStats(state.currentDay);
-        const planned = getPlannedSets(state.currentDay);
-        const quality = getSessionQuality(state.currentDay);
-
-        document.getElementById("plannedToday").textContent = planned.total;
-        document.getElementById("checkedToday").textContent = checked.total;
-        document.getElementById("qualityToday").textContent = quality;
-        document.getElementById("globalSuggestion").textContent =
-          getGlobalSuggestion(state.currentDay);
-
-        document.getElementById("bicepsCompleted").textContent =
+        document.getElementById("weeklyBiceps").textContent =
           state.weeklyCompleted.biceps;
-        document.getElementById("tricepsCompleted").textContent =
+        document.getElementById("weeklyTriceps").textContent =
           state.weeklyCompleted.triceps;
 
-        const bBox = document.getElementById("bicepsWeeklyBox");
-        const tBox = document.getElementById("tricepsWeeklyBox");
+        const bCard = document.getElementById("weeklyBicepsCard");
+        const tCard = document.getElementById("weeklyTricepsCard");
 
-        bBox.classList.remove("status-good", "status-warn", "status-bad");
-        tBox.classList.remove("status-good", "status-warn", "status-bad");
+        bCard.className = `stat ${getVolumeClass(state.weeklyCompleted.biceps)}`;
+        tCard.className = `stat ${getVolumeClass(state.weeklyCompleted.triceps)}`;
 
-        bBox.classList.add(getWeeklyStatusClass(state.weeklyCompleted.biceps));
-        tBox.classList.add(getWeeklyStatusClass(state.weeklyCompleted.triceps));
+        document.getElementById("globalSuggestion").textContent =
+          getGlobalSuggestion();
+      }
+
+      function renderWorkout() {
+        const exercise = getExercise();
+        if (!exercise) return;
+
+        document.getElementById("exerciseName").textContent = exercise.name;
+        document.getElementById("exerciseCues").textContent = exercise.cues;
+
+        const meta = document.getElementById("exerciseMeta");
+        meta.innerHTML = `
+          <div class="chip">${exercise.sets} sets</div>
+          <div class="chip">${exercise.reps}</div>
+          <div class="chip">${exercise.rest}</div>
+          <div class="chip">${exercise.load}</div>
+          <div class="chip">${exercise.muscle}</div>
+          ${exercise.optional ? '<div class="chip">optional</div>' : ""}
+        `;
+
+        const wrap = document.getElementById("setsWrap");
+        wrap.innerHTML = "";
+
+        for (let i = 1; i <= exercise.sets; i += 1) {
+          const entry = getEntry(exercise.id, i);
+          const row = document.createElement("div");
+          row.className = "set-row";
+
+          const weightOptions = exercise.weightOptions
+            .map((w) => {
+              const selected = entry.weight === w ? "selected" : "";
+              return `<option value="${w}" ${selected}>${w}</option>`;
+            })
+            .join("");
+
+          const rirOptions = ["", "0", "1", "2", "3", "4", "5"]
+            .map((r) => {
+              const label = r === "" ? "RIR" : r;
+              const selected = entry.rir === r ? "selected" : "";
+              return `<option value="${r}" ${selected}>${label}</option>`;
+            })
+            .join("");
+
+          row.innerHTML = `
+            <div class="set-top">
+              <div class="set-label">Set ${i}</div>
+              <button class="done-btn ${entry.done ? "active" : ""}">
+                ${entry.done ? "Done" : "Mark"}
+              </button>
+            </div>
+
+            <div class="set-controls">
+              <select class="weight-select">
+                <option value="">Weight</option>
+                ${weightOptions}
+              </select>
+
+              <input
+                class="reps-input"
+                type="number"
+                min="0"
+                step="1"
+                placeholder="Reps"
+                value="${entry.reps || ""}"
+              />
+
+              <select class="rir-select">
+                ${rirOptions}
+              </select>
+
+              <input
+                class="notes-input"
+                type="text"
+                placeholder="Notes"
+                value="${entry.notes || ""}"
+              />
+            </div>
+
+            <div class="actions-row">
+              <button class="btn rest-btn">Rest</button>
+              <button class="btn copy-prev-btn">Copy Prev</button>
+            </div>
+
+            <div class="set-suggestion">
+              ${getSuggestion(exercise, entry)}
+            </div>
+          `;
+
+          const doneBtn = row.querySelector(".done-btn");
+          const weightSelect = row.querySelector(".weight-select");
+          const repsInput = row.querySelector(".reps-input");
+          const rirSelect = row.querySelector(".rir-select");
+          const notesInput = row.querySelector(".notes-input");
+          const restBtn = row.querySelector(".rest-btn");
+          const copyPrevBtn = row.querySelector(".copy-prev-btn");
+
+          doneBtn.addEventListener("click", () => {
+            setEntry(exercise.id, i, "done", !entry.done);
+          });
+
+          weightSelect.addEventListener("change", (e) => {
+            setEntry(exercise.id, i, "weight", e.target.value);
+          });
+
+          repsInput.addEventListener("input", (e) => {
+            setEntry(exercise.id, i, "reps", e.target.value);
+          });
+
+          rirSelect.addEventListener("change", (e) => {
+            setEntry(exercise.id, i, "rir", e.target.value);
+          });
+
+          notesInput.addEventListener("input", (e) => {
+            setEntry(exercise.id, i, "notes", e.target.value);
+          });
+
+          restBtn.addEventListener("click", () => {
+            startTimer(exercise.restSeconds);
+            switchScreen("timerScreen");
+          });
+
+          copyPrevBtn.addEventListener("click", () => {
+            if (i === 1) return;
+            const prev = getEntry(exercise.id, i - 1);
+            state.entries[`${state.currentDay}:${exercise.id}:${i}`] = {
+              ...prev,
+              done: false,
+            };
+            saveState();
+            renderAll();
+          });
+
+          wrap.appendChild(row);
+        }
+      }
+
+      function renderTimer() {
+        let remaining = state.timer.remaining;
+
+        if (state.timer.running && state.timer.endAt) {
+          remaining = Math.max(
+            0,
+            Math.ceil((state.timer.endAt - Date.now()) / 1000)
+          );
+        }
+
+        const mins = String(Math.floor(remaining / 60)).padStart(2, "0");
+        const secs = String(remaining % 60).padStart(2, "0");
+        document.getElementById("timerValue").textContent = `${mins}:${secs}`;
+      }
+
+      function renderHistory() {
+        const root = document.getElementById("historyList");
+        root.innerHTML = "";
+
+        if (!state.sessionCompleteHistory.length) {
+          root.innerHTML = `<div class="muted tiny">No completed sessions yet.</div>`;
+          return;
+        }
+
+        state.sessionCompleteHistory.slice(0, 20).forEach((item) => {
+          const date = new Date(item.date).toLocaleString();
+          const div = document.createElement("div");
+          div.className = "history-item";
+          div.innerHTML = `
+            <div class="history-top">
+              <strong>${item.day === "dayA" ? "Day A" : "Day B"}</strong>
+              <div class="history-date">${date}</div>
+            </div>
+            <div class="tiny muted" style="margin-top: 6px;">
+              Biceps: ${item.bicepsSets} | Triceps: ${item.tricepsSets}
+              | Quality: ${item.quality}
+            </div>
+            ${
+              item.note
+                ? `<div class="tiny muted" style="margin-top: 6px;">${item.note}</div>`
+                : ""
+            }
+          `;
+          root.appendChild(div);
+        });
+      }
+
+      function renderSettings() {
+        document.getElementById("sessionNotes").value =
+          state.sessionNotes[state.currentDay] || "";
       }
 
       function saveSessionNotes() {
@@ -1514,7 +1492,7 @@
       }
 
       function markSessionComplete() {
-        const day = getDayData();
+        const day = getDay();
         let bicepsSets = 0;
         let tricepsSets = 0;
 
@@ -1530,40 +1508,36 @@
 
         state.weeklyCompleted.biceps += bicepsSets;
         state.weeklyCompleted.triceps += tricepsSets;
+
         saveSessionNotes();
 
-        const historyItem = {
+        state.sessionCompleteHistory.unshift({
           date: new Date().toISOString(),
           day: state.currentDay,
           bicepsSets,
           tricepsSets,
-          quality: getSessionQuality(state.currentDay),
+          quality: getCheckedSets(state.currentDay).total > 0 ? "Logged" : "—",
           note: state.sessionNotes[state.currentDay] || "",
-        };
+        });
 
-        state.sessionCompleteHistory.unshift(historyItem);
-        state.sessionCompleteHistory = state.sessionCompleteHistory.slice(0, 20);
-
+        state.sessionCompleteHistory = state.sessionCompleteHistory.slice(0, 30);
         saveState();
-        renderStats();
-        renderHistory();
-
+        renderAll();
         alert(
           `Session complete.\nAdded ${bicepsSets} biceps sets and ${tricepsSets} triceps sets to weekly totals.`
         );
       }
 
-      function resetWorkout() {
+      function resetCurrentWorkout() {
         const confirmed = confirm(
-          `Reset all logged sets and notes for ${getDayData().title}?`
+          `Reset all logged data for ${getDay().title}?`
         );
         if (!confirmed) return;
 
-        const day = getDayData();
+        const day = getDay();
         day.exercises.forEach((exercise) => {
           for (let i = 1; i <= exercise.sets; i += 1) {
-            const key = `${state.currentDay}:${exercise.id}:${i}`;
-            state.entries[key] = {
+            state.entries[`${state.currentDay}:${exercise.id}:${i}`] = {
               done: false,
               weight: "",
               reps: "",
@@ -1575,17 +1549,28 @@
 
         state.sessionNotes[state.currentDay] = "";
         saveState();
-        renderDay();
-        renderStats();
+        renderAll();
+      }
+
+      function resetWeeklyCounters() {
+        const confirmed = confirm("Reset weekly counters?");
+        if (!confirmed) return;
+
+        state.weeklyCompleted = {
+          biceps: 0,
+          triceps: 0,
+        };
+        saveState();
+        renderAll();
       }
 
       function clearAllData() {
         const confirmed = confirm(
-          "Clear all saved data? This removes workout entries, notes, timer state, weekly totals, and history."
+          "Clear all saved data? This wipes the app."
         );
         if (!confirmed) return;
 
-        state = deepClone(defaultState);
+        state = clone(defaultState);
         saveState();
         applyTheme();
         renderAll();
@@ -1598,7 +1583,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "arm-hypertrophy-app-data.json";
+        a.download = "arm-hypertrophy-data.json";
         a.click();
         URL.revokeObjectURL(url);
       }
@@ -1609,7 +1594,7 @@
           try {
             const parsed = JSON.parse(String(reader.result));
             state = {
-              ...deepClone(defaultState),
+              ...clone(defaultState),
               ...parsed,
               weeklyCompleted: {
                 ...defaultState.weeklyCompleted,
@@ -1635,69 +1620,6 @@
           }
         };
         reader.readAsText(file);
-      }
-
-      function resetWeeklyCounters() {
-        const confirmed = confirm("Reset weekly biceps and triceps counters?");
-        if (!confirmed) return;
-
-        state.weeklyCompleted = {
-          biceps: 0,
-          triceps: 0,
-        };
-        saveState();
-        renderStats();
-      }
-
-      function renderHistory() {
-        const root = document.getElementById("historyList");
-        root.innerHTML = "";
-
-        if (!state.sessionCompleteHistory.length) {
-          root.appendChild(
-            el("div", { className: "muted small", text: "No completed sessions yet." })
-          );
-          return;
-        }
-
-        state.sessionCompleteHistory.forEach((item) => {
-          const dt = new Date(item.date);
-          root.appendChild(
-            el("div", { className: "history-item" }, [
-              el("div", { className: "small" }, [
-                el("strong", {
-                  text: `${item.day === "dayA" ? "Day A" : "Day B"} — ${dt.toLocaleString()}`,
-                }),
-              ]),
-              el("div", {
-                className: "muted small",
-                text: `Biceps sets: ${item.bicepsSets} | Triceps sets: ${item.tricepsSets} | Quality: ${item.quality}`,
-              }),
-              item.note
-                ? el("div", {
-                    className: "tiny muted",
-                    text: `Notes: ${item.note}`,
-                  })
-                : null,
-            ])
-          );
-        });
-      }
-
-      function applyTheme() {
-        document.body.classList.toggle("light", state.theme === "light");
-        document.getElementById("themeBtn").textContent =
-          state.theme === "light" ? "Dark Mode" : "Light Mode";
-      }
-
-      function toggleTheme() {
-        state.theme = state.theme === "light" ? "dark" : "light";
-        saveState();
-        applyTheme();
-      }
-
-      function printWorkout() {
-        window.print();
       }
 
       function startTimer(seconds) {
@@ -1757,10 +1679,12 @@
             renderTimer();
             clearInterval(timerInterval);
             timerInterval = null;
+
             try {
               if ("vibrate" in navigator) navigator.vibrate([150, 100, 150]);
             } catch {}
-            alert("Rest time complete.");
+
+            alert("Rest complete.");
             return;
           }
 
@@ -1770,68 +1694,207 @@
       }
 
       function resumeTimerIfNeeded() {
-        if (!state.timer.running || !state.timer.endAt) return;
-        runTimerLoop();
+        if (state.timer.running && state.timer.endAt) {
+          runTimerLoop();
+        }
       }
 
-      function renderTimer() {
-        let display = state.timer.remaining;
+      function moveExercise(direction) {
+        const day = getDay();
+        const max = day.exercises.length - 1;
+        state.currentExerciseIndex = Math.max(
+          0,
+          Math.min(max, state.currentExerciseIndex + direction)
+        );
+        saveState();
+        renderAll();
+      }
 
-        if (state.timer.running && state.timer.endAt) {
-          display = Math.max(0, Math.ceil((state.timer.endAt - Date.now()) / 1000));
+      function jumpToSelectedExercise() {
+        const index = Number(document.getElementById("exerciseSelect").value);
+        state.currentExerciseIndex = Number.isFinite(index) ? index : 0;
+        saveState();
+        renderAll();
+        switchScreen("workoutScreen");
+      }
+
+      function populateTopMenus() {
+        populateDaySelect();
+        populateExerciseSelect();
+      }
+
+      function renderAll() {
+        const day = getDay();
+        const max = day.exercises.length - 1;
+        if (state.currentExerciseIndex > max) {
+          state.currentExerciseIndex = 0;
         }
 
-        document.getElementById("timerValue").textContent =
-          formatSeconds(display);
+        populateTopMenus();
+        renderDashboard();
+        renderWorkout();
+        renderTimer();
+        renderHistory();
+        renderSettings();
+        switchScreen(state.currentScreen);
       }
 
       function bindEvents() {
-        document.getElementById("dayABtn").addEventListener("click", () => {
-          saveSessionNotes();
-          state.currentDay = "dayA";
+        document.getElementById("daySelect").addEventListener("change", (e) => {
+          state.currentDay = e.target.value;
+          state.currentExerciseIndex = 0;
           saveState();
-          renderDay();
-          renderStats();
-        });
-
-        document.getElementById("dayBBtn").addEventListener("click", () => {
-          saveSessionNotes();
-          state.currentDay = "dayB";
-          saveState();
-          renderDay();
-          renderStats();
+          renderAll();
         });
 
         document
-          .getElementById("toggleGuideBtn")
-          .addEventListener("click", (e) => {
-            const panel = document.getElementById("guidePanel");
-            panel.classList.toggle("hidden");
-            e.target.textContent = panel.classList.contains("hidden")
-              ? "Show Guide"
-              : "Hide Guide";
+          .getElementById("exerciseSelect")
+          .addEventListener("change", (e) => {
+            state.currentExerciseIndex = Number(e.target.value);
+            saveState();
+            renderAll();
           });
 
-        document.getElementById("themeBtn").addEventListener("click", toggleTheme);
-        document.getElementById("printBtn").addEventListener("click", printWorkout);
         document
-          .getElementById("resetWorkoutBtn")
-          .addEventListener("click", resetWorkout);
-        document.getElementById("saveNotesBtn").addEventListener("click", () => {
-          saveSessionNotes();
-          alert("Session notes saved.");
-        });
-        document
-          .getElementById("markSessionCompleteBtn")
-          .addEventListener("click", markSessionComplete);
-        document
-          .getElementById("clearAllBtn")
-          .addEventListener("click", clearAllData);
-        document.getElementById("exportBtn").addEventListener("click", exportData);
+          .getElementById("jumpToExerciseBtn")
+          .addEventListener("click", jumpToSelectedExercise);
 
-        document.getElementById("importBtn").addEventListener("click", () => {
-          document.getElementById("importFile").click();
+        document.getElementById("themeBtn").addEventListener("click", () => {
+          state.theme = state.theme === "light" ? "dark" : "light";
+          saveState();
+          applyTheme();
         });
+
+        document.querySelectorAll(".tab-btn").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            switchScreen(btn.dataset.screen);
+          });
+        });
+
+        document
+          .getElementById("quickCompleteBtn")
+          .addEventListener("click", markSessionComplete);
+
+        document
+          .getElementById("quickPrintBtn")
+          .addEventListener("click", () => window.print());
+
+        document
+          .getElementById("markAllDoneBtn")
+          .addEventListener("click", () => {
+            const ex = getExercise();
+            for (let i = 1; i <= ex.sets; i += 1) {
+              setEntry(ex.id, i, "done", true);
+            }
+            renderAll();
+          });
+
+        document
+          .getElementById("clearExerciseBtn")
+          .addEventListener("click", () => {
+            const ex = getExercise();
+            for (let i = 1; i <= ex.sets; i += 1) {
+              state.entries[`${state.currentDay}:${ex.id}:${i}`] = {
+                done: false,
+                weight: "",
+                reps: "",
+                rir: "",
+                notes: "",
+              };
+            }
+            saveState();
+            renderAll();
+          });
+
+        document
+          .getElementById("exerciseQuickAction")
+          .addEventListener("change", (e) => {
+            const value = e.target.value;
+            const ex = getExercise();
+
+            if (value === "rest") {
+              startTimer(ex.restSeconds);
+              switchScreen("timerScreen");
+            }
+
+            if (value === "next") {
+              moveExercise(1);
+              switchScreen("workoutScreen");
+            }
+
+            if (value === "prev") {
+              moveExercise(-1);
+              switchScreen("workoutScreen");
+            }
+
+            e.target.value = "";
+          });
+
+        document
+          .getElementById("timerPresetSelect")
+          .addEventListener("change", (e) => {
+            document.getElementById("customTimerInput").value = e.target.value;
+          });
+
+        document
+          .getElementById("startPresetTimerBtn")
+          .addEventListener("click", () => {
+            const seconds = Number(
+              document.getElementById("timerPresetSelect").value
+            );
+            startTimer(seconds);
+          });
+
+        document
+          .getElementById("startCustomTimerBtn")
+          .addEventListener("click", () => {
+            const seconds = Number(
+              document.getElementById("customTimerInput").value
+            );
+            if (!Number.isFinite(seconds) || seconds < 5) {
+              alert("Enter at least 5 seconds.");
+              return;
+            }
+            startTimer(seconds);
+          });
+
+        document
+          .getElementById("pauseTimerBtn")
+          .addEventListener("click", pauseTimer);
+
+        document
+          .getElementById("resetTimerBtn")
+          .addEventListener("click", resetTimer);
+
+        document
+          .getElementById("sessionNotes")
+          .addEventListener("input", saveSessionNotes);
+
+        document
+          .getElementById("saveNotesBtn")
+          .addEventListener("click", () => {
+            saveSessionNotes();
+            alert("Notes saved.");
+          });
+
+        document
+          .getElementById("runSettingsActionBtn")
+          .addEventListener("click", () => {
+            const select = document.getElementById("settingsActionSelect");
+            const action = select.value;
+
+            if (action === "complete") markSessionComplete();
+            if (action === "reset-workout") resetCurrentWorkout();
+            if (action === "reset-weekly") resetWeeklyCounters();
+            if (action === "export") exportData();
+            if (action === "import") {
+              document.getElementById("importFile").click();
+            }
+            if (action === "print") window.print();
+            if (action === "clear-all") clearAllData();
+
+            select.value = "";
+          });
 
         document.getElementById("importFile").addEventListener("change", (e) => {
           const file = e.target.files && e.target.files[0];
@@ -1839,51 +1902,13 @@
           e.target.value = "";
         });
 
-        document
-          .getElementById("resetWeeklyBtn")
-          .addEventListener("click", resetWeeklyCounters);
-
-        document
-          .getElementById("sessionNotes")
-          .addEventListener("input", saveSessionNotes);
-
-        document.querySelectorAll(".timer-preset").forEach((btn) => {
-          btn.addEventListener("click", () => {
-            startTimer(Number(btn.getAttribute("data-timer")));
-          });
+        document.getElementById("moreBtn").addEventListener("click", () => {
+          switchScreen("settingsScreen");
         });
-
-        document
-          .getElementById("timerStartCustom")
-          .addEventListener("click", () => {
-            const value = Number(
-              document.getElementById("customTimerInput").value
-            );
-            if (!Number.isFinite(value) || value < 5) {
-              alert("Enter a custom timer of at least 5 seconds.");
-              return;
-            }
-            startTimer(value);
-          });
-
-        document
-          .getElementById("timerPauseBtn")
-          .addEventListener("click", pauseTimer);
-
-        document
-          .getElementById("timerResetBtn")
-          .addEventListener("click", resetTimer);
       }
 
-      function renderAll() {
-        renderDay();
-        renderStats();
-        renderHistory();
-        renderTimer();
-      }
-
-      bindEvents();
       applyTheme();
+      bindEvents();
       renderAll();
       resumeTimerIfNeeded();
     </script>
